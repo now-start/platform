@@ -17,7 +17,6 @@ permissions:
 
 jobs:
   config:
-    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'config-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: config
@@ -25,7 +24,6 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   eureka:
-    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'eureka-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: eureka
@@ -33,7 +31,6 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   admin:
-    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'admin-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: admin
@@ -41,7 +38,6 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   gateway:
-    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'gateway-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: gateway

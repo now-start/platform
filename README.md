@@ -67,6 +67,7 @@ Config 설정 변경이 `main`에 push되면 `.github/workflows/config-refresh.y
 - `{module}-{version}` tag가 없으면 빌드, 이미지 푸시, 릴리스 생성
 - `{module}-{version}` tag가 이미 있으면 해당 모듈 빌드/이미지 푸시 생략
 - 새 이미지를 만들려면 해당 모듈의 `build.gradle` patch version을 올립니다.
+- `release` 이벤트도 4개 모듈을 reusable workflow에 전달하며, reusable workflow가 release tag의 module prefix를 확인해 해당 모듈만 프로모트/롤백합니다.
 
 이미지는 모듈명을 기준으로 생성됩니다.
 
