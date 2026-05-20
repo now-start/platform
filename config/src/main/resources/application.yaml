@@ -14,8 +14,8 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/now-start/config-service
-          search-paths: src/main/resources/config/*
+          uri: https://github.com/now-start/platform
+          search-paths: config/src/main/resources/config/*
 
 encrypt:
   key: ${ENCRYPT_KEY}
