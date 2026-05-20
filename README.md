@@ -62,13 +62,11 @@ Config 설정 변경이 `main`에 push되면 `.github/workflows/config-refresh.y
 
 ## CI/CD
 
-`.github/workflows/build.yaml`은 변경된 모듈만 감지해서 reusable workflow를 호출합니다.
+`.github/workflows/build.yaml`은 `push`와 `pull_request`에서 4개 모듈을 모두 reusable workflow에 전달합니다. 실제 이미지 생성 여부는 reusable workflow가 각 모듈의 `version`과 Git tag 존재 여부로 결정합니다.
 
-- `config/**` 변경 -> `config` 이미지
-- `eureka/**` 변경 -> `eureka` 이미지
-- `admin/**` 변경 -> `admin` 이미지
-- `gateway/**` 변경 -> `gateway` 이미지
-- `build.gradle`, `settings.gradle`, `gradle/**` 변경 -> 전체 모듈 대상
+- `{module}-{version}` tag가 없으면 빌드, 이미지 푸시, 릴리스 생성
+- `{module}-{version}` tag가 이미 있으면 해당 모듈 빌드/이미지 푸시 생략
+- 새 이미지를 만들려면 해당 모듈의 `build.gradle` patch version을 올립니다.
 
 이미지는 모듈명을 기준으로 생성됩니다.
 
@@ -79,7 +77,7 @@ ghcr.io/now-start/admin:{version}
 ghcr.io/now-start/gateway:{version}
 ```
 
-각 모듈의 `build.gradle`에 있는 `version`이 이미지 태그와 릴리스 태그에 사용됩니다. 같은 버전 태그가 이미 존재하면 reusable workflow의 skip 로직에 따라 빌드/푸시가 생략될 수 있습니다.
+각 모듈의 `build.gradle`에 있는 `version`이 이미지 태그와 릴리스 태그에 사용됩니다. 루트 `build.gradle`이나 공통 설정을 변경했더라도 모듈 version을 올리지 않으면 기존 tag 기준으로 skip될 수 있습니다.
 
 릴리스 이벤트는 `{module}-{version}` 태그 prefix로 모듈을 구분합니다.
 
@@ -89,4 +87,3 @@ eureka-2.4.6
 admin-2.11.4
 gateway-4.8.1
 ```
-

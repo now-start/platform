@@ -16,44 +16,8 @@ permissions:
   packages: write
 
 jobs:
-  changes:
-    if: ${{ github.event_name != 'release' }}
-    runs-on: ubuntu-latest
-    outputs:
-      config: ${{ steps.filter.outputs.config }}
-      eureka: ${{ steps.filter.outputs.eureka }}
-      admin: ${{ steps.filter.outputs.admin }}
-      gateway: ${{ steps.filter.outputs.gateway }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dorny/paths-filter@v4
-        id: filter
-        with:
-          filters: |
-            config:
-              - 'config/**'
-              - 'gradle/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-            eureka:
-              - 'eureka/**'
-              - 'gradle/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-            admin:
-              - 'admin/**'
-              - 'gradle/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-            gateway:
-              - 'gateway/**'
-              - 'gradle/**'
-              - 'build.gradle'
-              - 'settings.gradle'
-
   config:
-    needs: changes
-    if: ${{ always() && (needs.changes.outputs.config == 'true' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'config-'))) }}
+    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'config-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: config
@@ -61,8 +25,7 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   eureka:
-    needs: changes
-    if: ${{ always() && (needs.changes.outputs.eureka == 'true' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'eureka-'))) }}
+    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'eureka-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: eureka
@@ -70,8 +33,7 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   admin:
-    needs: changes
-    if: ${{ always() && (needs.changes.outputs.admin == 'true' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'admin-'))) }}
+    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'admin-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: admin
@@ -79,8 +41,7 @@ jobs:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   gateway:
-    needs: changes
-    if: ${{ always() && (needs.changes.outputs.gateway == 'true' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'gateway-'))) }}
+    if: ${{ github.event_name != 'release' || startsWith(github.event.release.tag_name, 'gateway-') }}
     uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
     with:
       module: gateway
