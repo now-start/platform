@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: admin
+  config:
+    import: ${SPRING_CONFIG_IMPORT:optional:configserver:https://spring.nowstart.org/config}
+
+springdoc:
+  swagger-ui:
+    config-url: /admin/v3/api-docs/swagger-config
+    api-docs-url: /admin/v3/api-docs

@@ -1,0 +1,24 @@
+server:
+  port: 9090
+
+spring:
+  boot:
+    admin:
+      ui:
+        external-views:
+          - label: "API 문서"
+            order: 1000
+            url: "https://spring.nowstart.org/admin/swagger-ui/index.html"
+            iframe: true
+          - label: "모니터링"
+            order: 1001
+            children:
+              - label: "Grafana"
+                url: "https://grafana.nowstart.org"
+                iframe: true
+              - label: "Redis"
+                url: "https://redis.nowstart.org"
+                iframe: true
+              - label: "RabbitMQ"
+                url: "https://rabbitmq.nowstart.org"
+                iframe: true

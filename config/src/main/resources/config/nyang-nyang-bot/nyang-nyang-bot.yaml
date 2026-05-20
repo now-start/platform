@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: '{cipher}a5a8114474e5fcd6a9f0ba8d6ca8a274026ffccca977e27808c3b7ac88ff96149a87008bfae0909d1bea323a08adb5292db5952b3077f0e7e91aed9389ce9bea47aae7f35d4abd5506aeffc6312db4d0'
+    username: '{cipher}e76dd74451fcf3902439fc1e0c96ebbb3fc7efbcb5c37972f5db8a81d6ceb1be'
+    password: '{cipher}076e73cea7ab188f178eba197daa6c558ed9f174772aea76e5234192ab9f986002ad50eebd9dec8ef31a49604c76edd8'
+
+google:
+  spreadsheet:
+    id: '{cipher}1cc1d4d93c6867c06be9538b15c34e01fea3c27e92fd32377fc813d35a40efa3128c5bc4afa121618dd817c0e8dbcbc2ed091730626d3759cade6d1536cacd34'
+    key: '{cipher}a4dddd07ca9249da2cc470320f003df2f09ded25023444a8262c66b90f74342fe03f280928e26212f290b076d9c8d058915770a22ba63d37f689b8d401e5ed61'
+
+chzzk:
+  id: '{cipher}f93ab23c908884fa48f0dd3da17ee937432794ea7e8d7f851f64bd962d5a967f'
+  password: '{cipher}0d3cf888b40f6075675acf3e79862e45164acdbb9feaf14d409a64dfce9e9639'
+  channelId: '{cipher}4e63bfbda0f473e4b2aa856d30d88c5dd340b4468010e2480b8c07576140ea12075f8cffdc28be4c8b93072c326d4bcbbe97f55939b3b2fc927ee1d07a632606'
+  clientId: '{cipher}a71d4ba5c5f65a703ea71eca02c25c76181745c1c22ae11d7111d10b417603d02aa8dcc298bef55aa3a6c0d3761b0ed41b9c42392afadf4165c47f335c877877'
+  clientSecret: '{cipher}b1d5ae9f93def440422b5c140fa530be556ac31ef95832a8cf0bc4d97d653c9ac91de8d5792c1b1c3e2c30e08f5188dfbdcd645779d42f1fe64648d0bb5e3fda'
+  redirectUri: '{cipher}ccdb7d9639b879b7d1640cf540255f747b92cd8b8cbd657c476bb2c64cbeff9cb99aff9a9d28f4a86d37d4cee38fff216bbeff2562c0d4e1b3bb3b317c8f87de'

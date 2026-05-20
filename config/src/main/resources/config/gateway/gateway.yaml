@@ -1,0 +1,46 @@
+server:
+  port: 8000
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          trusted-proxies: ".*"
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          default-filters:
+            - name: CircuitBreaker
+  security:
+    oauth2:
+      client:
+        registration:
+          nowstart:
+            client-id: '{cipher}6fcddaf87dbd20981b2351c29cd9744b981040a79482096562642246d04bedb9badd54e1c6a13bfd94432fcdb0f0cbcb76c8f20ae4715023ed7af98ea74ea425'
+            client-secret: '{cipher}6d94033e34779a67acf181d5dd10189377668f4c641b2953a68a415e996c204b3f1062f5fb812ae1c18b8e9f42f4727e82c7ac3bfbaa645ea6d990ab76aa8cf0'
+            scope: '{cipher}774a7cc365e02056a9aef178f258e48d765a91bff26e7639a3218886f34f74715367840c5ad5a551d04b64a057eb335f'
+        provider:
+          nowstart:
+            issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
+      resourceserver:
+        jwt:
+          issuer-uri: '{cipher}84c9d2aa8f0c3c1f091bd5449d942d09b0f5b50602e90422990f73308b5398d07bd32c1e942e492bbfe47b5df115fb34042497d00dc8e0073b8618cc7850bd8e'
+
+security:
+  users:
+    - "/admin/applications"
+    - "/admin/wallboard"
+    - "/admin/journal"
+    - "/admin/external"
+    - "/admin/assets/**"
+    - "/admin/*.*"
+    - "/admin/swagger-ui/**"
+    - "/*/v3/api-docs"
+    - "/admin/v3/api-docs/swagger-config"
+  publicPaths:
+    - "/config/actuator/busrefresh"       # github action
+    - "/*/actuator/**"                    # 엑추에이터
+    - "/actuator/**"                      # 엑추에이터
+    - "/nyang-nyang-bot/**"               # 자체 인증

@@ -1,0 +1,34 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    url: '{cipher}18384cfd0bcf3f349bdf947ae04c75b89b6a6490901bb71e45d5601d1edce49eb17b8675c8e1abcecf02944c19cc4defa6696f97d18d8710f8a056ffba53b742'
+    username: '{cipher}a077e77c52dd8c5b13eb4e0d3bdcce4176aade09468a1e9091b089efd213d999'
+    password: '{cipher}e401a93703428807bf17574cb15de2054850bd9669509f30c880f3d18ec71dc6c0b1cc7e0faa8faa84abc5307439c804'
+
+evergreen:
+  trading:
+    base-url: '{cipher}1e7e704a7fc25257e4a0354975c6ee7418d9b9225a4fe0310ad7723cdeb3b4a0c1776324d82167a7ee17b1a1e5871c27'
+    access-key: '{cipher}96520b0098482a3869f7752f074c8e8cbe20c058a597932679ee226317da9c3bdf71536d4255abb4f58d5f629da5a14045b9d52592d07710f6f364c685e55685'
+    secret-key: '{cipher}0ad9c8290af95dacadb3c21190035528d35a776b05aa20706f8181ffc61f5a27ab24de9be8eb52059bca81c99e3c080ff7c09a2dc98e61d024a455689be1c40a'
+    fee-rate: 0.0005
+    interval: 30s
+    execution-mode: LIVE
+    markets: KRW-BTC
+    candle-count: 400
+    closed-candle-only: true
+    signal-order-notional: 100000
+    active-strategy-version: v5
+    v5:
+      regime-ema-len: 120
+      atr-period: 18
+      atr-mult-low-vol: 2.0
+      atr-mult-high-vol: 3.0
+      vol-regime-lookback: 40
+      vol-regime-threshold: 0.6
+      regime-band: 0.01

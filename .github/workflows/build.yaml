@@ -1,0 +1,90 @@
+name: Platform CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types:
+      - released
+      - prereleased
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      config: ${{ steps.filter.outputs.config }}
+      eureka: ${{ steps.filter.outputs.eureka }}
+      admin: ${{ steps.filter.outputs.admin }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            config:
+              - 'config/**'
+              - 'gradle/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+            eureka:
+              - 'eureka/**'
+              - 'gradle/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+            admin:
+              - 'admin/**'
+              - 'gradle/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+            gateway:
+              - 'gateway/**'
+              - 'gradle/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+
+  config:
+    needs: changes
+    if: ${{ needs.changes.outputs.config == 'true' || github.event_name == 'release' }}
+    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    with:
+      module: config
+      service-name: config
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  eureka:
+    needs: changes
+    if: ${{ needs.changes.outputs.eureka == 'true' || github.event_name == 'release' }}
+    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    with:
+      module: eureka
+      service-name: eureka
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  admin:
+    needs: changes
+    if: ${{ needs.changes.outputs.admin == 'true' || github.event_name == 'release' }}
+    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    with:
+      module: admin
+      service-name: admin
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  gateway:
+    needs: changes
+    if: ${{ needs.changes.outputs.gateway == 'true' || github.event_name == 'release' }}
+    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    with:
+      module: gateway
+      service-name: gateway
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,31 @@
+spring:
+  mail:
+    host: mail.nowstart.org
+    port: 587
+    username: '{cipher}b4fe252e9b11fb3e43d395ad2512b8defba4e75e349a4856713199bf2db6656b'
+    password: '{cipher}c16bbd48acb689718be15447d98feeb93c4f1eb84d3c710729834837b4a8a4d4'
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+lotto:
+  max-retries: 3
+  retry-delay-ms: 300000
+  cron:
+    check: 0 0 22 * * 6
+    buy: 0 0 9 * * 0
+  users:
+    - id: '{cipher}586873f6058f8ed1990f9b3b7b0c98f3b0c77cb1aa648b166f19e262cdfe3716'
+      password: '{cipher}3e6f7fcf442562be2938197ee99d7477f6900c5eb06ae2308d7f904d56655d4d'
+      email: '{cipher}e8d80cc1845fad86434e4a5a186b3c27a719aeffe32f916e945255345b0577f9d378b1d4d17a4f5843fc80728e2d33cd'
+      count: 5
+      init: true
+    - id: '{cipher}7c5e092dc3527dce8bb5d206169acdd79c7208589d0b26f8eb17337ac1d4f74d'
+      password: '{cipher}1428a146f097efadab94d57c1049d112a5b02a6a34cc16797223c20aa16e9a57'
+      email: '{cipher}2493be0b3e4d768892525436cb67bd7701a70f4f1a1a56fc25b461b0d18173882638065323d9df26ca890eeaf2ac1753'
+      count: 5
+      init: false

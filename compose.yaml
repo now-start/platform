@@ -1,0 +1,56 @@
+services:
+  config:
+    user: root
+    restart: always
+    image: ghcr.io/now-start/config:latest
+    ports:
+      - 8888:8888
+    volumes:
+      - ./logs:/workspace/logs
+    environment:
+      - TZ=Asia/Seoul
+      - ENCRYPT_KEY=${ENCRYPT_KEY}
+
+  eureka:
+    user: root
+    restart: always
+    image: ghcr.io/now-start/eureka:latest
+    ports:
+      - 8761:8761
+    volumes:
+      - ./logs:/workspace/logs
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888
+    depends_on:
+      - config
+
+  admin:
+    user: root
+    restart: always
+    image: ghcr.io/now-start/admin:latest
+    ports:
+      - 9090:9090
+    volumes:
+      - ./logs:/workspace/logs
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888
+    depends_on:
+      - config
+      - eureka
+
+  gateway:
+    user: root
+    restart: always
+    image: ghcr.io/now-start/gateway:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - ./logs:/workspace/logs
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888
+    depends_on:
+      - config
+      - eureka
