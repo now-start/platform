@@ -6,6 +6,8 @@ spring:
     admin:
       client:
         url: '{cipher}2c149bdddfa6a6cacef87311776fce5380a8d80532975d758cbe912db8beea11b6f79db37ee38607314edd09629eaa64'
+        instance:
+          name: EUREKA
 
 eureka:
   client:
