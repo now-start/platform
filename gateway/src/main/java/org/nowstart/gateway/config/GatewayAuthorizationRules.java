@@ -17,10 +17,19 @@ import org.springframework.web.util.pattern.PathPatternParser;
 @RequiredArgsConstructor
 public class GatewayAuthorizationRules {
 
+    private static final String[] OAUTH2_LOGIN_PATHS = {
+            "/login",
+            "/oauth2/authorization/**",
+            "/login/oauth2/code/**",
+            "/error"
+    };
+
     private final AuthorizeExchangeProperties authorizeProperties;
     private final PathPatternParser pathPatternParser = new PathPatternParser();
 
     public void configure(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {
+        exchanges.pathMatchers(OAUTH2_LOGIN_PATHS).permitAll();
+
         List<AuthorizeExchangeProperties.PathRule> sortedRules = authorizeProperties.getPathRules().stream()
                 .sorted((r1, r2) -> {
                     PathPattern p1 = pathPatternParser.parse(r1.path());

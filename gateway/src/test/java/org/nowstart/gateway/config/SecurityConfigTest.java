@@ -17,11 +17,14 @@ import org.springframework.boot.webflux.autoconfigure.WebFluxAutoConfiguration;
 import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @SpringBootTest(classes = {
@@ -90,6 +93,17 @@ class SecurityConfigTest {
                 .exchange()
                 .expectStatus().isFound()
                 .expectHeader().valueEquals("Location", "/login");
+    }
+
+    @Test
+    @DisplayName("로그인 페이지는 다시 자기 자신으로 리다이렉트하지 않는다")
+    void loginPageShouldNotRedirectToItself() {
+        webTestClient.get()
+                .uri("/login")
+                .header("Accept", "text/html")
+                .exchange()
+                .expectStatus().value(status -> assertThat(status).isNotEqualTo(HttpStatus.FOUND.value()))
+                .expectHeader().doesNotExist("Location");
     }
 
     @Test
