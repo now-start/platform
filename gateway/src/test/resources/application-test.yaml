@@ -45,34 +45,17 @@ security:
         - "USERS"
   defaultRoles:
     - "ADMINISTRATORS"
-  rules:
-    - path: "/actuator/**"
-      access: "PUBLIC"
-    - path: "/nyang-nyang-bot/**"
-      access: "PUBLIC"
-    - path: "/internal/config-refresh"
-      methods:
-        - "POST"
-      roles:
-        - "ADMINISTRATORS"
-    - path: "/*/v3/api-docs"
-      roles:
-        - "USERS"
-    - path: "/admin"
-      roles:
-        - "USERS"
-    - path: "/admin/"
-      roles:
-        - "USERS"
-    - path: "/admin/applications"
-      roles:
-        - "USERS"
-    - path: "/admin/wallboard"
-      roles:
-        - "USERS"
-    - path: "/admin/journal"
-      roles:
-        - "USERS"
-    - path: "/admin/external"
-      roles:
-        - "USERS"
+  publicPaths:
+    - "/actuator/**"
+    - "/nyang-nyang-bot/**"
+  rolePaths:
+    USERS:
+      - "/*/v3/api-docs"
+      - "/admin"
+      - "/admin/"
+      - "/admin/applications"
+      - "/admin/wallboard"
+      - "/admin/journal"
+      - "/admin/external"
+    ADMINISTRATORS:
+      - "/config/actuator/busrefresh"

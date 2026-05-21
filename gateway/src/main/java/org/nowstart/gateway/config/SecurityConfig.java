@@ -19,7 +19,6 @@ public class SecurityConfig {
 
     private static final String DEFAULT_OAUTH2_SUCCESS_LOCATION = "/admin";
 
-    private final CustomAuthoritiesFilter customAuthoritiesFilter;
     private final GatewayAuthenticationEntryPoint authenticationEntryPoint;
     private final GatewayAuthorizationRules authorizationRules;
 
@@ -36,7 +35,7 @@ public class SecurityConfig {
                 .authorizeExchange(authorizationRules::configure)
                 .httpBasic(Customizer.withDefaults())
                 .oauth2Login(oauth2 -> oauth2.authenticationSuccessHandler(oAuth2SuccessHandler()))
-                .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAfter(new CustomAuthoritiesFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 

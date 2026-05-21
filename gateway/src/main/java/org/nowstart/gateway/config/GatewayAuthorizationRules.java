@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.nowstart.gateway.data.AuthorizeExchangeProperties;
 import org.nowstart.gateway.data.Role;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -18,10 +17,8 @@ import org.springframework.web.util.pattern.PathPatternParser;
 public class GatewayAuthorizationRules {
 
     private static final String[] OAUTH2_LOGIN_PATHS = {
-            "/login",
             "/oauth2/authorization/**",
-            "/login/oauth2/code/**",
-            "/error"
+            "/login/oauth2/code/**"
     };
 
     private final AuthorizeExchangeProperties authorizeProperties;
@@ -50,23 +47,11 @@ public class GatewayAuthorizationRules {
     }
 
     private void permitAll(ServerHttpSecurity.AuthorizeExchangeSpec exchanges, AuthorizeExchangeProperties.PathRule rule) {
-        if (CollectionUtils.isEmpty(rule.methods())) {
-            exchanges.pathMatchers(rule.path()).permitAll();
-            return;
-        }
-        for (HttpMethod method : rule.methods()) {
-            exchanges.pathMatchers(method, rule.path()).permitAll();
-        }
+        exchanges.pathMatchers(rule.path()).permitAll();
     }
 
     private void requireRoles(ServerHttpSecurity.AuthorizeExchangeSpec exchanges, AuthorizeExchangeProperties.PathRule rule) {
         String[] acceptedRoleNames = Role.acceptedNames(rule.roles());
-        if (CollectionUtils.isEmpty(rule.methods())) {
-            exchanges.pathMatchers(rule.path()).hasAnyRole(acceptedRoleNames);
-            return;
-        }
-        for (HttpMethod method : rule.methods()) {
-            exchanges.pathMatchers(method, rule.path()).hasAnyRole(acceptedRoleNames);
-        }
+        exchanges.pathMatchers(rule.path()).hasAnyRole(acceptedRoleNames);
     }
 }

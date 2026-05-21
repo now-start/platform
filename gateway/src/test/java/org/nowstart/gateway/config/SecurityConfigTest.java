@@ -1,5 +1,6 @@
 package org.nowstart.gateway.config;
 
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +18,15 @@ import org.springframework.boot.webflux.autoconfigure.WebFluxAutoConfiguration;
 import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
 @ActiveProfiles("test")
 @SpringBootTest(classes = {
@@ -32,8 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         GatewayAuthenticationEntryPoint.class,
         GatewayAuthorizationRules.class,
         GatewayUserDetailsServiceConfig.class,
-        CustomAuthoritiesFilter.class,
-        AuthorizeExchangeProperties.class
+        AuthorizeExchangeProperties.class,
+        SecurityConfigTest.TestConfig.class
 })
 @ImportAutoConfiguration({
         ReactiveWebSecurityAutoConfiguration.class,
@@ -79,7 +81,7 @@ class SecurityConfigTest {
     @DisplayName("config refresh 운영 경로는 인증이 필요하다")
     void configRefreshPathShouldRequireAuthentication() {
         webTestClient.post()
-                .uri("/internal/config-refresh")
+                .uri("/config/actuator/busrefresh")
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
@@ -96,14 +98,25 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("로그인 페이지는 다시 자기 자신으로 리다이렉트하지 않는다")
-    void loginPageShouldNotRedirectToItself() {
+    @DisplayName("사용하지 않는 기본 로그인 경로도 SSO 인증 시작 경로로 이동한다")
+    void unusedLoginPageShouldRedirectToOAuth2Authorization() {
         webTestClient.get()
                 .uri("/login")
                 .header("Accept", "text/html")
                 .exchange()
-                .expectStatus().value(status -> assertThat(status).isNotEqualTo(HttpStatus.FOUND.value()))
-                .expectHeader().doesNotExist("Location");
+                .expectStatus().isFound()
+                .expectHeader().valueEquals("Location", "/oauth2/authorization/nowstart");
+    }
+
+    @Test
+    @DisplayName("HTML 요청이면 config busrefresh 경로도 SSO 인증 시작 경로로 이동한다")
+    void configBusRefreshBrowserHtmlRequestShouldRedirectToOAuth2Authorization() {
+        webTestClient.post()
+                .uri("/config/actuator/busrefresh")
+                .header("Accept", "text/html")
+                .exchange()
+                .expectStatus().isFound()
+                .expectHeader().valueEquals("Location", "/oauth2/authorization/nowstart");
     }
 
     @Test
@@ -119,7 +132,7 @@ class SecurityConfigTest {
     @DisplayName("내장 Basic 인증은 config refresh 운영 경로를 통과한다")
     void basicAuthenticationShouldReachConfigRefreshPath() {
         webTestClient.post()
-                .uri("/internal/config-refresh")
+                .uri("/config/actuator/busrefresh")
                 .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
@@ -133,6 +146,20 @@ class SecurityConfigTest {
                 .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("인증된 요청은 다운스트림 핸들러에 내부 인증 헤더를 전달한다")
+    void authenticatedRequestShouldPassTrustedAuthHeadersToDownstreamHandler() {
+        webTestClient.get()
+                .uri("/echo-headers")
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.user").isEqualTo(BASIC_ADMIN_USERNAME)
+                .jsonPath("$.roles").isEqualTo("ADMINISTRATORS")
+                .jsonPath("$.authType").isEqualTo("UsernamePasswordAuthenticationToken");
     }
 
     @Test
@@ -213,6 +240,25 @@ class SecurityConfigTest {
         @Bean
         public AuditEventRepository auditEventRepository() {
             return new InMemoryAuditEventRepository();
+        }
+
+        @Bean
+        public RouterFunction<ServerResponse> echoHeadersRoute() {
+            return RouterFunctions.route()
+                    .GET("/echo-headers", request -> ServerResponse.ok().bodyValue(Map.of(
+                            "user", headerOrEmpty(request, "X-Authenticated-User"),
+                            "roles", headerOrEmpty(request, "X-Authenticated-Roles"),
+                            "authType", headerOrEmpty(request, "X-Authenticated-Auth-Type")
+                    )))
+                    .build();
+        }
+
+        private static String headerOrEmpty(ServerRequest request, String name) {
+            String value = request.headers().firstHeader(name);
+            if (value == null) {
+                return "";
+            }
+            return value;
         }
     }
 }

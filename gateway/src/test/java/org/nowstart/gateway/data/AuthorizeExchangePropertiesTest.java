@@ -2,21 +2,21 @@ package org.nowstart.gateway.data;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpMethod;
 
 class AuthorizeExchangePropertiesTest {
 
     @Test
-    @DisplayName("rules 설정은 path, method, roles를 보안 규칙으로 변환한다")
+    @DisplayName("rules 설정은 path와 roles를 보안 규칙으로 변환한다")
     void rulesShouldBeMappedToPathRules() {
         // given
         var refreshRule = new AuthorizeExchangeProperties.Rule();
-        refreshRule.setPath("/internal/config-refresh");
-        refreshRule.setMethods(List.of(HttpMethod.POST));
+        refreshRule.setPath("/config/actuator/busrefresh");
         refreshRule.setRoles(List.of(Role.ADMINISTRATORS));
 
         var props = new AuthorizeExchangeProperties();
@@ -27,8 +27,7 @@ class AuthorizeExchangePropertiesTest {
 
         // then
         then(rules).hasSize(1);
-        then(rules.getFirst().path()).isEqualTo("/internal/config-refresh");
-        then(rules.getFirst().methods()).containsExactly(HttpMethod.POST);
+        then(rules.getFirst().path()).isEqualTo("/config/actuator/busrefresh");
         then(rules.getFirst().roles()).containsExactly(Role.ADMINISTRATORS);
     }
 
@@ -37,7 +36,7 @@ class AuthorizeExchangePropertiesTest {
     void publicRuleShouldHaveNoRoles() {
         // given
         var publicRule = new AuthorizeExchangeProperties.Rule();
-        publicRule.setPath("/actuator/**");
+        publicRule.setPaths(List.of("/actuator/**", "/nyang-nyang-bot/**"));
         publicRule.setAccess(AuthorizeExchangeProperties.Access.PUBLIC);
 
         var props = new AuthorizeExchangeProperties();
@@ -47,10 +46,10 @@ class AuthorizeExchangePropertiesTest {
         var rules = props.getPathRules();
 
         // then
-        then(rules).hasSize(1);
-        then(rules.getFirst().path()).isEqualTo("/actuator/**");
-        then(rules.getFirst().methods()).isEmpty();
-        then(rules.getFirst().roles()).isEmpty();
+        then(rules).hasSize(2);
+        then(rules).extracting(AuthorizeExchangeProperties.PathRule::path)
+                .containsExactly("/actuator/**", "/nyang-nyang-bot/**");
+        then(rules).allSatisfy(rule -> then(rule.roles()).isEmpty());
     }
 
     @Test
@@ -70,6 +69,31 @@ class AuthorizeExchangePropertiesTest {
         // then
         then(rules).hasSize(1);
         then(rules.getFirst().roles()).containsExactly(Role.USERS);
+    }
+
+    @Test
+    @DisplayName("rolePaths 설정은 Role별 권한 규칙으로 변환한다")
+    void rolePathsShouldBeMappedToRoleRules() {
+        // given
+        var props = new AuthorizeExchangeProperties();
+        Map<Role, List<String>> rolePaths = new LinkedHashMap<>();
+        rolePaths.put(Role.USERS, List.of("/admin", "/admin/applications"));
+        rolePaths.put(Role.ADMINISTRATORS, List.of("/config/actuator/busrefresh"));
+        props.setRolePaths(rolePaths);
+
+        // when
+        var rules = props.getPathRules();
+
+        // then
+        then(rules).hasSize(3);
+        then(rules).extracting(AuthorizeExchangeProperties.PathRule::path)
+                .containsExactly("/admin", "/admin/applications", "/config/actuator/busrefresh");
+        then(rules).extracting(AuthorizeExchangeProperties.PathRule::roles)
+                .containsExactly(
+                        List.of(Role.USERS),
+                        List.of(Role.USERS),
+                        List.of(Role.ADMINISTRATORS)
+                );
     }
 
     @Test

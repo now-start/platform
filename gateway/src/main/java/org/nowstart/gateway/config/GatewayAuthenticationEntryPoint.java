@@ -15,7 +15,6 @@ import reactor.core.publisher.Mono;
 @Component
 public class GatewayAuthenticationEntryPoint implements ServerAuthenticationEntryPoint {
 
-    private static final String INTERNAL_PATH_PREFIX = "/internal/";
     private static final String BASIC_REALM = "Basic realm=\"gateway\"";
     private static final URI LOGIN_LOCATION = URI.create("/oauth2/authorization/nowstart");
 
@@ -36,9 +35,6 @@ public class GatewayAuthenticationEntryPoint implements ServerAuthenticationEntr
     }
 
     private boolean isBrowserNavigation(ServerHttpRequest request) {
-        if (request.getPath().pathWithinApplication().value().startsWith(INTERNAL_PATH_PREFIX)) {
-            return false;
-        }
         return request.getHeaders().getAccept().stream()
                 .anyMatch(mediaType -> mediaType.isCompatibleWith(MediaType.TEXT_HTML));
     }

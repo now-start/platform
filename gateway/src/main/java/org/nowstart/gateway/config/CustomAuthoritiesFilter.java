@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.nowstart.gateway.data.Role;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -16,14 +15,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
-@Slf4j
-@Component
 public class CustomAuthoritiesFilter implements WebFilter {
 
     private static final String GROUPS_ATTRIBUTE = "groups";
@@ -48,7 +44,6 @@ public class CustomAuthoritiesFilter implements WebFilter {
                         return chain.filter(sanitizedExchange);
                     }
 
-                    logAuthentication(exchange.getRequest(), authentication);
                     if (authentication instanceof AnonymousAuthenticationToken) {
                         return chain.filter(sanitizedExchange);
                     }
@@ -99,18 +94,6 @@ public class CustomAuthoritiesFilter implements WebFilter {
                 .map(authority -> authority.substring(ROLE_PREFIX.length()))
                 .distinct()
                 .toList();
-    }
-
-    private void logAuthentication(ServerHttpRequest request, Authentication authentication) {
-        log.info("[{}] SecurityContext found method={} path={} authType={} principal={} authorities={}",
-                request.getId(),
-                request.getMethod(),
-                request.getPath(),
-                authentication.getClass().getSimpleName(),
-                authentication.getName(),
-                authentication.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .toList());
     }
 
     private Authentication mapAuthentication(Authentication authentication) {
