@@ -1,4 +1,4 @@
-version = '2.11.4'
+version = '2.11.5'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'

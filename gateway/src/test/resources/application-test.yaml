@@ -15,11 +15,6 @@ spring:
     bus:
       enabled: false
   security:
-    user:
-      name: "basic-user"
-      password: "{noop}basic-secret"
-      roles:
-        - "ADMINISTRATORS"
     oauth2:
       client:
         registration:
@@ -33,21 +28,45 @@ spring:
             authorization-uri: "http://localhost:9999/oauth/authorize"
             token-uri: "http://localhost:9999/oauth/token"
             jwk-set-uri: "http://localhost:9999/oauth/jwks"
-      resourceserver:
-        jwt:
-          issuer-uri: "http://localhost:9999"
 
 eureka:
   client:
     enabled: false
 
 security:
-  users:
-    - "/*/v3/api-docs"
-    - "/admin/applications"
-    - "/admin/wallboard"
-    - "/admin/journal"
-    - "/admin/external"
-  publicPaths:
-    - "/actuator/**"
-    - "/nyang-nyang-bot/**"
+  basicUsers:
+    - username: "basic-admin"
+      password: "{noop}admin-secret"
+      roles:
+        - "ADMINISTRATORS"
+    - username: "basic-user"
+      password: "{noop}user-secret"
+      roles:
+        - "USERS"
+  defaultRoles:
+    - "ADMINISTRATORS"
+  rules:
+    - path: "/actuator/**"
+      access: "PUBLIC"
+    - path: "/nyang-nyang-bot/**"
+      access: "PUBLIC"
+    - path: "/internal/config-refresh"
+      methods:
+        - "POST"
+      roles:
+        - "ADMINISTRATORS"
+    - path: "/*/v3/api-docs"
+      roles:
+        - "USERS"
+    - path: "/admin/applications"
+      roles:
+        - "USERS"
+    - path: "/admin/wallboard"
+      roles:
+        - "USERS"
+    - path: "/admin/journal"
+      roles:
+        - "USERS"
+    - path: "/admin/external"
+      roles:
+        - "USERS"

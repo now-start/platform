@@ -1,198 +1,104 @@
 package org.nowstart.gateway.data;
 
 import static org.assertj.core.api.BDDAssertions.then;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 
 class AuthorizeExchangePropertiesTest {
 
-    private AuthorizeExchangeProperties givenProperties(
-            List<String> users,
-            List<String> publicPaths
-    ) {
-        AuthorizeExchangeProperties props = new AuthorizeExchangeProperties();
-        props.setUsers(users);
-        props.setPublicPaths(publicPaths);
-        return props;
+    @Test
+    @DisplayName("rules 설정은 path, method, roles를 보안 규칙으로 변환한다")
+    void rulesShouldBeMappedToPathRules() {
+        // given
+        var refreshRule = new AuthorizeExchangeProperties.Rule();
+        refreshRule.setPath("/internal/config-refresh");
+        refreshRule.setMethods(List.of(HttpMethod.POST));
+        refreshRule.setRoles(List.of(Role.ADMINISTRATORS));
+
+        var props = new AuthorizeExchangeProperties();
+        props.setRules(List.of(refreshRule));
+
+        // when
+        var rules = props.getPathRules();
+
+        // then
+        then(rules).hasSize(1);
+        then(rules.getFirst().path()).isEqualTo("/internal/config-refresh");
+        then(rules.getFirst().methods()).containsExactly(HttpMethod.POST);
+        then(rules.getFirst().roles()).containsExactly(Role.ADMINISTRATORS);
     }
 
-    @Nested
-    @DisplayName("users paths")
-    class WhenUsersPathIsSet {
+    @Test
+    @DisplayName("public access rule은 roles가 없는 permitAll 규칙으로 변환한다")
+    void publicRuleShouldHaveNoRoles() {
+        // given
+        var publicRule = new AuthorizeExchangeProperties.Rule();
+        publicRule.setPath("/actuator/**");
+        publicRule.setAccess(AuthorizeExchangeProperties.Access.PUBLIC);
 
-        @Test
-        @DisplayName("users paths map to users role")
-        void thenUsersRoleShouldBeGranted() {
-            // given
-            var props = givenProperties(List.of("/users/**"), null);
+        var props = new AuthorizeExchangeProperties();
+        props.setRules(List.of(publicRule));
 
-            // when
-            var rules = props.getRules();
+        // when
+        var rules = props.getPathRules();
 
-            // then
-            then(rules).hasSize(1);
-            then(rules.get(0).path()).isEqualTo("/users/**");
-            then(rules.get(0).roles())
-                    .containsExactly(Role.USERS);
-        }
+        // then
+        then(rules).hasSize(1);
+        then(rules.getFirst().path()).isEqualTo("/actuator/**");
+        then(rules.getFirst().methods()).isEmpty();
+        then(rules.getFirst().roles()).isEmpty();
     }
 
-    @Nested
-    @DisplayName("public paths")
-    class WhenPublicPathsAreSet {
+    @Test
+    @DisplayName("roles가 없는 비공개 rule은 defaultRoles를 사용한다")
+    void privateRuleWithoutRolesShouldUseDefaultRoles() {
+        // given
+        var privateRule = new AuthorizeExchangeProperties.Rule();
+        privateRule.setPath("/admin/**");
 
-        @Test
-        @DisplayName("public paths map to empty roles")
-        void thenRolesShouldBeEmpty() {
-            // given
-            var props = givenProperties(null, List.of("/actuator/**", "/public/**"));
+        var props = new AuthorizeExchangeProperties();
+        props.setDefaultRoles(List.of(Role.USERS));
+        props.setRules(List.of(privateRule));
 
-            // when
-            var rules = props.getRules();
+        // when
+        var rules = props.getPathRules();
 
-            // then
-            then(rules).hasSize(2);
-            rules.forEach(rule -> then(rule.roles()).isEmpty());
-        }
+        // then
+        then(rules).hasSize(1);
+        then(rules.getFirst().roles()).containsExactly(Role.USERS);
     }
 
-    @Nested
-    @DisplayName("combined paths")
-    class WhenAllPathTypesAreCombined {
+    @Test
+    @DisplayName("defaultRoles가 없으면 ADMINISTRATORS를 기본 권한으로 사용한다")
+    void defaultRolesShouldFallbackToAdministrators() {
+        // given
+        var props = new AuthorizeExchangeProperties();
 
-        @Test
-        @DisplayName("each path gets the expected roles")
-        void thenEachPathShouldHaveCorrectRoles() {
-            // given
-            var props = givenProperties(
-                    List.of("/users/**"),
-                    List.of("/public/**")
-            );
-
-            // when
-            var rules = props.getRules();
-            var ruleMap = rules.stream()
-                    .collect(Collectors.toMap(
-                            AuthorizeExchangeProperties.PathRule::path,
-                            AuthorizeExchangeProperties.PathRule::roles
-                    ));
-
-            // then
-            then(rules).hasSize(2);
-            then(ruleMap.get("/users/**"))
-                    .containsExactly(Role.USERS);
-            then(ruleMap.get("/public/**"))
-                    .isEmpty();
-        }
+        // when & then
+        then(props.getEffectiveDefaultRoles()).containsExactly(Role.ADMINISTRATORS);
     }
 
-    @Nested
-    @DisplayName("null properties")
-    class WhenSomePropertiesAreNull {
+    @Test
+    @DisplayName("legacy users/publicPaths 설정도 기존 규칙으로 변환한다")
+    void legacyPropertiesShouldStillBeMapped() {
+        // given
+        var props = new AuthorizeExchangeProperties();
+        props.setUsers(List.of("/admin/applications"));
+        props.setPublicPaths(List.of("/actuator/**"));
 
-        @Test
-        @DisplayName("null properties are excluded")
-        void thenNullPropertiesShouldBeExcluded() {
-            // given
-            var props = givenProperties(
-                    List.of("/users/**"),
-                    List.of("/public/**")
-            );
+        // when
+        var ruleMap = props.getPathRules().stream()
+                .collect(Collectors.toMap(
+                        AuthorizeExchangeProperties.PathRule::path,
+                        AuthorizeExchangeProperties.PathRule::roles
+                ));
 
-            // when
-            var rules = props.getRules();
-
-            // then
-            then(rules).hasSize(2);
-            then(rules.stream().map(AuthorizeExchangeProperties.PathRule::path))
-                    .containsExactlyInAnyOrder("/users/**", "/public/**");
-        }
-    }
-
-    @Nested
-    @DisplayName("empty list")
-    class WhenPropertiesAreEmptyList {
-
-        @Test
-        @DisplayName("empty lists create no rules")
-        void thenNoRulesShouldBeCreated() {
-            // given
-            var props = givenProperties(
-                    List.of(),
-                    List.of()
-            );
-
-            // when
-            var rules = props.getRules();
-
-            // then
-            then(rules).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("specific config")
-    class WhenSpecificSecurityConfigIsProvided {
-
-        @Test
-        @DisplayName("configured paths are mapped correctly")
-        void thenAllConfiguredPathsShouldBeMappedCorrectly() {
-            // given
-            var users = List.of(
-                    "/admin/applications",
-                    "/nyang-nyang-bot/authorization/**"
-            );
-            var publicPaths = List.of(
-                    "/actuator/**",
-                    "/nyang-nyang-bot/**"
-            );
-            var props = givenProperties(users, publicPaths);
-
-            // when
-            var rules = props.getRules();
-            var ruleMap = rules.stream()
-                    .collect(Collectors.toMap(
-                            AuthorizeExchangeProperties.PathRule::path,
-                            AuthorizeExchangeProperties.PathRule::roles,
-                            (existing, replacement) -> existing
-                    ));
-
-            // then
-            then(rules).hasSize(users.size() + publicPaths.size());
-
-            users.forEach(path -> {
-                then(ruleMap.get(path))
-                        .as("Path %s should have users role", path)
-                        .containsExactly(Role.USERS);
-            });
-
-            publicPaths.forEach(path -> {
-                then(ruleMap.get(path))
-                        .as("Path %s should be public (no roles)", path)
-                        .isEmpty();
-            });
-        }
-
-        @Test
-        @DisplayName("public paths always map to empty roles")
-        void thenPublicPathsShouldHaveEmptyRolesForPermitAll() {
-            // given
-            var publicPaths = List.of("/health", "/info");
-            var props = givenProperties(null, publicPaths);
-
-            // when
-            var rules = props.getRules();
-
-            // then
-            then(rules).hasSize(2);
-            for (var rule : rules) {
-                then(rule.roles())
-                        .as("Public path %s must have empty roles for permitAll()", rule.path())
-                        .isEmpty();
-            }
-        }
+        // then
+        then(ruleMap.get("/admin/applications")).containsExactly(Role.USERS);
+        then(ruleMap.get("/actuator/**")).isEmpty();
     }
 }

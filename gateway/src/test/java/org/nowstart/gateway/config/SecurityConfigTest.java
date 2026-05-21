@@ -1,7 +1,5 @@
 package org.nowstart.gateway.config;
 
-import java.time.Instant;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,16 +18,20 @@ import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 @ActiveProfiles("test")
-@SpringBootTest(classes = {SecurityConfig.class, AuthorizeExchangeProperties.class})
+@SpringBootTest(classes = {
+        SecurityConfig.class,
+        GatewayAuthenticationEntryPoint.class,
+        GatewayAuthorizationRules.class,
+        GatewayUserDetailsServiceConfig.class,
+        CustomAuthoritiesFilter.class,
+        AuthorizeExchangeProperties.class
+})
 @ImportAutoConfiguration({
         ReactiveWebSecurityAutoConfiguration.class,
         WebFluxAutoConfiguration.class,
@@ -37,8 +39,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 })
 class SecurityConfigTest {
 
-    private static final String BASIC_USERNAME = "basic-user";
-    private static final String BASIC_PASSWORD = "basic-secret";
+    private static final String BASIC_ADMIN_USERNAME = "basic-admin";
+    private static final String BASIC_ADMIN_PASSWORD = "admin-secret";
+    private static final String BASIC_USER_USERNAME = "basic-user";
+    private static final String BASIC_USER_PASSWORD = "user-secret";
 
     @Autowired
     private ApplicationContext context;
@@ -46,8 +50,6 @@ class SecurityConfigTest {
     private WebTestClient webTestClient;
     @MockitoBean
     private ReactiveClientRegistrationRepository clientRegistrationRepository;
-    @MockitoBean
-    private ReactiveJwtDecoder reactiveJwtDecoder;
 
     @BeforeEach
     void setUp() {
@@ -80,11 +82,31 @@ class SecurityConfigTest {
     }
 
     @Test
+    @DisplayName("브라우저 HTML 요청은 SSO 로그인을 위해 로그인 페이지로 이동한다")
+    void browserHtmlRequestShouldRedirectToLogin() {
+        webTestClient.get()
+                .uri("/config/other")
+                .header("Accept", "text/html")
+                .exchange()
+                .expectStatus().isFound()
+                .expectHeader().valueEquals("Location", "/login");
+    }
+
+    @Test
+    @DisplayName("actuator 경로는 내부 관리 도구 접근을 위해 public으로 통과한다")
+    void actuatorPathShouldBePublic() {
+        webTestClient.get()
+                .uri("/actuator/env")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
     @DisplayName("내장 Basic 인증은 config refresh 운영 경로를 통과한다")
     void basicAuthenticationShouldReachConfigRefreshPath() {
         webTestClient.post()
                 .uri("/internal/config-refresh")
-                .headers(headers -> headers.setBasicAuth(BASIC_USERNAME, BASIC_PASSWORD))
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -94,17 +116,17 @@ class SecurityConfigTest {
     void basicAuthenticationShouldReachAdminProtectedPath() {
         webTestClient.get()
                 .uri("/config/other")
-                .headers(headers -> headers.setBasicAuth(BASIC_USERNAME, BASIC_PASSWORD))
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
     }
 
     @Test
-    @DisplayName("내장 Basic 인증은 USERS 경로도 통과한다")
+    @DisplayName("ADMINISTRATORS Basic 인증은 USERS 경로도 통과한다")
     void basicAuthenticationShouldReachUsersProtectedPath() {
         webTestClient.get()
                 .uri("/admin/applications")
-                .headers(headers -> headers.setBasicAuth(BASIC_USERNAME, BASIC_PASSWORD))
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -114,27 +136,29 @@ class SecurityConfigTest {
     void invalidBasicAuthenticationShouldReturnUnauthorized() {
         webTestClient.get()
                 .uri("/config/other")
-                .headers(headers -> headers.setBasicAuth(BASIC_USERNAME, "wrong-secret"))
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, "wrong-secret"))
                 .exchange()
                 .expectStatus().isUnauthorized();
     }
 
     @Test
-    @DisplayName("기존 JWT Authentication 흐름은 그대로 동작한다")
-    void existingJwtAuthenticationShouldStillWork() {
-        Jwt jwt = Jwt.withTokenValue("test-token")
-                .header("alg", "RS256")
-                .subject("jwt-user")
-                .claim("groups", List.of("administrators"))
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(300))
-                .build();
-
-        webTestClient.mutateWith(SecurityMockServerConfigurers.mockAuthentication(new JwtAuthenticationToken(jwt)))
-                .get()
-                .uri("/config/other")
+    @DisplayName("USERS Basic 인증은 명시된 사용자 경로를 통과한다")
+    void usersBasicAuthenticationShouldReachUsersProtectedPath() {
+        webTestClient.get()
+                .uri("/admin/applications")
+                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("USERS Basic 인증은 기본 관리자 경로를 통과하지 못한다")
+    void usersBasicAuthenticationShouldNotReachDefaultAdminPath() {
+        webTestClient.get()
+                .uri("/config/other")
+                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
+                .exchange()
+                .expectStatus().isForbidden();
     }
 
     @Test

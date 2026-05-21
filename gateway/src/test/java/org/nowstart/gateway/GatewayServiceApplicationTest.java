@@ -10,7 +10,6 @@ import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -20,8 +19,6 @@ class GatewayServiceApplicationTest {
 
     @MockitoBean
     private ReactiveClientRegistrationRepository clientRegistrationRepository;
-    @MockitoBean
-    private ReactiveJwtDecoder reactiveJwtDecoder;
 
     @Autowired
     private ApplicationContext applicationContext;

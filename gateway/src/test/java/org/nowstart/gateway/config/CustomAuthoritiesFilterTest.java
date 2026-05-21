@@ -1,12 +1,12 @@
 package org.nowstart.gateway.config;
 
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -14,11 +14,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,8 +29,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
@@ -43,7 +43,7 @@ class CustomAuthoritiesFilterTest {
     private Set<String> whenFilterExecuted(SecurityContext context) {
         var exchange = givenExchange();
         var chain = mock(WebFilterChain.class);
-        given(chain.filter(exchange)).willReturn(Mono.empty());
+        given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
         filter.filter(exchange, chain)
                 .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
@@ -61,18 +61,6 @@ class CustomAuthoritiesFilterTest {
     private OAuth2AuthenticationToken givenOAuth2Token(Map<String, Object> attributes, Collection<? extends GrantedAuthority> authorities) {
         var oauth2User = new DefaultOAuth2User(authorities, attributes, attributes.containsKey("sub") ? "sub" : attributes.keySet().iterator().next());
         return new OAuth2AuthenticationToken(oauth2User, authorities, "nowstart");
-    }
-
-    private Jwt givenJwt(Map<String, Object> claims) {
-        return Jwt.withTokenValue("test-token")
-                .header("alg", "RS256")
-                .header("typ", "JWT")
-                .issuer("https://test-issuer.example.com")
-                .subject("test-subject")
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(3600))
-                .claims(c -> c.putAll(claims))
-                .build();
     }
 
     private SecurityContext givenSecurityContext(Authentication auth) {
@@ -139,7 +127,7 @@ class CustomAuthoritiesFilterTest {
         }
 
         @Test
-        @DisplayName("알 수 없는 group 값이 포함되어 있으면 무시되고 유효한 값만 매핑된다")
+        @DisplayName("알 수 없는 group 값만 포함되어 있으면 권한을 부여하지 않는다")
         void thenUnknownGroupsShouldBeIgnored() {
             // given
             Map<String, Object> attributes = Map.of(
@@ -152,7 +140,7 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactly("ROLE_USERS");
+            then(authorities).isEmpty();
         }
     }
 
@@ -161,7 +149,7 @@ class CustomAuthoritiesFilterTest {
     class WhenOAuth2TokenHasNoGroups {
 
         @Test
-        @DisplayName("groups가 null이면 기존 권한이 유지된다")
+        @DisplayName("groups가 null이면 기존 권한만 유지된다")
         void thenExistingAuthoritiesShouldBeKeptWhenGroupsIsNull() {
             // given
             var attributes = new HashMap<String, Object>();
@@ -174,11 +162,11 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
+            then(authorities).containsExactly("EXISTING");
         }
 
         @Test
-        @DisplayName("groups 속성이 아예 없으면 기존 권한이 유지된다")
+        @DisplayName("groups 속성이 아예 없으면 기존 권한만 유지된다")
         void thenExistingAuthoritiesShouldBeKeptWhenGroupsAttributeMissing() {
             // given
             Map<String, Object> attributes = Map.of("sub", "user123");
@@ -189,76 +177,95 @@ class CustomAuthoritiesFilterTest {
             var authorities = whenFilterExecuted(context);
 
             // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
-        }
-    }
-
-    // ─── JWT 토큰 테스트 ─────────────────────────────────────────────────────
-
-    @Nested
-    @DisplayName("JWT 토큰에 groups claim이 있을 때")
-    class WhenJwtTokenHasGroups {
-
-        @Test
-        @DisplayName("groups claim에서 올바르게 권한이 매핑된다")
-        void thenGroupsShouldBeMappedToAuthorities() {
-            // given
-            var jwt = givenJwt(Map.of("groups", List.of("administrators")));
-            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
-
-            // when
-            var authorities = whenFilterExecuted(context);
-
-            // then
-            then(authorities).contains("ROLE_ADMINISTRATORS", "ROLE_USERS");
-        }
-
-        @Test
-        @DisplayName("소문자 groups claim이면 대문자로 변환하여 매핑된다")
-        void thenLowercaseGroupsShouldBeConvertedToUppercase() {
-            // given
-            var jwt = givenJwt(Map.of("groups", List.of("users")));
-            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
-
-            // when
-            var authorities = whenFilterExecuted(context);
-
-            // then
-            then(authorities).containsExactly("ROLE_USERS");
-        }
-
-        @Test
-        @DisplayName("알 수 없는 group 값이 포함되어 있으면 무시되고 유효한 값만 매핑된다")
-        void thenUnknownGroupsShouldBeIgnored() {
-            // given
-            var jwt = givenJwt(Map.of("groups", List.of("unknown_group", "administrators")));
-            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
-
-            // when
-            var authorities = whenFilterExecuted(context);
-
-            // then
-            then(authorities).containsExactlyInAnyOrder("ROLE_ADMINISTRATORS", "ROLE_USERS");
+            then(authorities).containsExactly("EXISTING");
         }
     }
 
     @Nested
-    @DisplayName("JWT 토큰에 groups claim이 없을 때")
-    class WhenJwtTokenHasNoGroups {
+    @DisplayName("내부 인증 헤더 처리")
+    class TrustedAuthenticationHeaders {
 
         @Test
-        @DisplayName("groups claim이 없으면 기존 권한이 유지된다")
-        void thenExistingAuthoritiesShouldBeKept() {
+        @DisplayName("인증되지 않은 요청의 외부 인증 헤더는 제거한다")
+        void thenSpoofedHeadersShouldBeRemovedWhenUnauthenticated() {
             // given
-            var jwt = givenJwt(Map.of("sub", "user123"));
-            var existingAuthorities = List.of(new SimpleGrantedAuthority("EXISTING"));
-            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, existingAuthorities, jwt.getSubject()));
+            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test")
+                    .header("X-Authenticated-User", "spoofed-user")
+                    .header("X-Authenticated-Roles", "ADMINISTRATORS")
+                    .header("X-Authenticated-Auth-Type", "spoofed-auth")
+                    .build());
+            var chain = mock(WebFilterChain.class);
+            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
-            // when
-            var authorities = whenFilterExecuted(context);
+            // when & then
+            StepVerifier.create(filter.filter(exchange, chain))
+                    .verifyComplete();
 
-            // then
-            then(authorities).containsExactlyInAnyOrder("EXISTING", "ROLE_USERS");
+            verify(chain).filter(exchangeCaptor.capture());
+            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
+            then(headers.getFirst("X-Authenticated-User")).isNull();
+            then(headers.getFirst("X-Authenticated-Roles")).isNull();
+            then(headers.getFirst("X-Authenticated-Auth-Type")).isNull();
+        }
+
+        @Test
+        @DisplayName("인증된 요청에는 게이트웨이가 정규화한 인증 헤더를 넣는다")
+        void thenGatewayShouldInjectNormalizedAuthenticationHeaders() {
+            // given
+            Map<String, Object> attributes = Map.of(
+                    "sub", "user123",
+                    "groups", List.of("administrators")
+            );
+            var context = givenSecurityContext(givenOAuth2Token(attributes, List.of()));
+            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test")
+                    .header("X-Authenticated-User", "spoofed-user")
+                    .header("X-Authenticated-Roles", "USERS")
+                    .header("X-Authenticated-Auth-Type", "spoofed-auth")
+                    .build());
+            var chain = mock(WebFilterChain.class);
+            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
+
+            // when & then
+            StepVerifier.create(
+                    filter.filter(exchange, chain)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+            ).verifyComplete();
+
+            verify(chain).filter(exchangeCaptor.capture());
+            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
+            then(headers.getFirst("X-Authenticated-User")).isEqualTo("user123");
+            then(headers.getFirst("X-Authenticated-Auth-Type")).isEqualTo("OAuth2AuthenticationToken");
+            then(headers.getFirst("X-Authenticated-Roles").split(","))
+                    .containsExactlyInAnyOrder("USERS", "ADMINISTRATORS");
+        }
+
+        @Test
+        @DisplayName("익명 인증에는 내부 인증 헤더를 넣지 않는다")
+        void thenAnonymousAuthenticationShouldNotInjectAuthenticationHeaders() {
+            // given
+            var context = givenSecurityContext(new AnonymousAuthenticationToken(
+                    "key",
+                    "anonymousUser",
+                    List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+            ));
+            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test").build());
+            var chain = mock(WebFilterChain.class);
+            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
+
+            // when & then
+            StepVerifier.create(
+                    filter.filter(exchange, chain)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+            ).verifyComplete();
+
+            verify(chain).filter(exchangeCaptor.capture());
+            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
+            then(headers.getFirst("X-Authenticated-User")).isNull();
+            then(headers.getFirst("X-Authenticated-Roles")).isNull();
+            then(headers.getFirst("X-Authenticated-Auth-Type")).isNull();
         }
     }
 
@@ -274,7 +281,7 @@ class CustomAuthoritiesFilterTest {
             // given
             var exchange = givenExchange();
             var chain = mock(WebFilterChain.class);
-            given(chain.filter(exchange)).willReturn(Mono.empty());
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
             // when & then
             StepVerifier.create(filter.filter(exchange, chain))
@@ -290,11 +297,14 @@ class CustomAuthoritiesFilterTest {
         @DisplayName("하위 WebFilterChain은 한 번만 호출되어야 한다")
         void thenFilterChainShouldOnlyBeInvokedOnce() {
             // given
-            var jwt = givenJwt(Map.of("groups", List.of("administrators")));
-            var context = givenSecurityContext(new JwtAuthenticationToken(jwt, List.of(), jwt.getSubject()));
+            Map<String, Object> attributes = Map.of(
+                    "sub", "user123",
+                    "groups", List.of("administrators")
+            );
+            var context = givenSecurityContext(givenOAuth2Token(attributes, List.of()));
             var exchange = givenExchange();
             var chain = mock(WebFilterChain.class);
-            given(chain.filter(exchange)).willReturn(Mono.empty());
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
             // when & then
             StepVerifier.create(
@@ -302,7 +312,7 @@ class CustomAuthoritiesFilterTest {
                             .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
             ).verifyComplete();
 
-            verify(chain, times(1)).filter(exchange);
+            verify(chain, times(1)).filter(any(ServerWebExchange.class));
         }
 
         @Test
@@ -312,7 +322,7 @@ class CustomAuthoritiesFilterTest {
             var context = givenSecurityContext(null);
             var exchange = givenExchange();
             var chain = mock(WebFilterChain.class);
-            given(chain.filter(exchange)).willReturn(Mono.empty());
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
             // when & then
             StepVerifier.create(
@@ -320,7 +330,7 @@ class CustomAuthoritiesFilterTest {
                             .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
             ).verifyComplete();
 
-            verify(chain, times(1)).filter(exchange);
+            verify(chain, times(1)).filter(any(ServerWebExchange.class));
         }
     }
 
@@ -337,7 +347,7 @@ class CustomAuthoritiesFilterTest {
             var chain = mock(WebFilterChain.class);
 
             given(unsupportedAuth.getAuthorities()).willReturn(List.of());
-            given(chain.filter(exchange)).willReturn(Mono.empty());
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
 
             var context = givenSecurityContext(unsupportedAuth);
 

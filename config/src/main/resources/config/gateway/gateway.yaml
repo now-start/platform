@@ -22,11 +22,6 @@ spring:
           default-filters:
             - name: CircuitBreaker
   security:
-    user:
-      name: ${spring.security.oauth2.client.registration.nowstart.client-id}
-      password: '{noop}${spring.security.oauth2.client.registration.nowstart.client-secret}'
-      roles:
-        - "ADMINISTRATORS"
     oauth2:
       client:
         registration:
@@ -37,21 +32,49 @@ spring:
         provider:
           nowstart:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
-      resourceserver:
-        jwt:
-          issuer-uri: '{cipher}84c9d2aa8f0c3c1f091bd5449d942d09b0f5b50602e90422990f73308b5398d07bd32c1e942e492bbfe47b5df115fb34042497d00dc8e0073b8618cc7850bd8e'
 
 security:
-  users:
-    - "/admin/applications"
-    - "/admin/wallboard"
-    - "/admin/journal"
-    - "/admin/external"
-    - "/admin/assets/**"
-    - "/admin/*.*"
-    - "/admin/swagger-ui/**"
-    - "/*/v3/api-docs"
-    - "/admin/v3/api-docs/swagger-config"
-  publicPaths:
-    - "/actuator/**"                      # 내부 Spring Boot Admin actuator 접근
-    - "/nyang-nyang-bot/**"               # 자체 인증
+  basicUsers:
+    - username: ${spring.security.oauth2.client.registration.nowstart.client-id}
+      password: '{noop}${spring.security.oauth2.client.registration.nowstart.client-secret}'
+      roles:
+        - "ADMINISTRATORS"
+  defaultRoles:
+    - "ADMINISTRATORS"
+  rules:
+    - path: "/actuator/**"                      # 내부 Spring Boot Admin actuator 접근
+      access: "PUBLIC"
+    - path: "/nyang-nyang-bot/**"               # 자체 인증
+      access: "PUBLIC"
+    - path: "/internal/config-refresh"
+      methods:
+        - "POST"
+      roles:
+        - "ADMINISTRATORS"
+    - path: "/admin/applications"
+      roles:
+        - "USERS"
+    - path: "/admin/wallboard"
+      roles:
+        - "USERS"
+    - path: "/admin/journal"
+      roles:
+        - "USERS"
+    - path: "/admin/external"
+      roles:
+        - "USERS"
+    - path: "/admin/assets/**"
+      roles:
+        - "USERS"
+    - path: "/admin/*.*"
+      roles:
+        - "USERS"
+    - path: "/admin/swagger-ui/**"
+      roles:
+        - "USERS"
+    - path: "/*/v3/api-docs"
+      roles:
+        - "USERS"
+    - path: "/admin/v3/api-docs/swagger-config"
+      roles:
+        - "USERS"

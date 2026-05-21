@@ -34,8 +34,8 @@ subprojects {
 
     ext {
         springBootAdminVersion = "4.0.4"
-        springDocVersion = "3.0.2"
-        opentelemetryVersion = "2.28.0"
+        springDocVersion = "3.0.3"
+        opentelemetryVersion = "2.28.1"
         springCloudVersion = "2025.1.1"
     }
 

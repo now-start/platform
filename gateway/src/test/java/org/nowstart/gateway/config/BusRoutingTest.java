@@ -14,7 +14,6 @@ import org.springframework.cloud.gateway.event.RefreshRoutesEvent;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import reactor.test.StepVerifier;
@@ -37,8 +36,6 @@ class BusRoutingTest {
 
     @MockitoBean
     private ReactiveClientRegistrationRepository clientRegistrationRepository;
-    @MockitoBean
-    private ReactiveJwtDecoder reactiveJwtDecoder;
 
     @Test
     @DisplayName("RefreshRoutesEvent가 발행되면 라우트 로케이터가 갱신되어야 한다")
