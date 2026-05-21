@@ -17,7 +17,7 @@ public class GatewayAuthenticationEntryPoint implements ServerAuthenticationEntr
 
     private static final String INTERNAL_PATH_PREFIX = "/internal/";
     private static final String BASIC_REALM = "Basic realm=\"gateway\"";
-    private static final URI LOGIN_LOCATION = URI.create("/login");
+    private static final URI LOGIN_LOCATION = URI.create("/oauth2/authorization/nowstart");
 
     @Override
     public @NonNull Mono<Void> commence(

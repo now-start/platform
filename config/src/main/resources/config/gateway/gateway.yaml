@@ -51,6 +51,12 @@ security:
         - "POST"
       roles:
         - "ADMINISTRATORS"
+    - path: "/admin"
+      roles:
+        - "USERS"
+    - path: "/admin/"
+      roles:
+        - "USERS"
     - path: "/admin/applications"
       roles:
         - "USERS"

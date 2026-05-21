@@ -58,6 +58,12 @@ security:
     - path: "/*/v3/api-docs"
       roles:
         - "USERS"
+    - path: "/admin"
+      roles:
+        - "USERS"
+    - path: "/admin/"
+      roles:
+        - "USERS"
     - path: "/admin/applications"
       roles:
         - "USERS"

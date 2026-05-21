@@ -8,12 +8,16 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.savedrequest.WebSessionServerRequestCache;
 
 @Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private static final String DEFAULT_OAUTH2_SUCCESS_LOCATION = "/admin";
 
     private final CustomAuthoritiesFilter customAuthoritiesFilter;
     private final GatewayAuthenticationEntryPoint authenticationEntryPoint;
@@ -31,8 +35,15 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
                 .authorizeExchange(authorizationRules::configure)
                 .httpBasic(Customizer.withDefaults())
-                .oauth2Login(Customizer.withDefaults())
+                .oauth2Login(oauth2 -> oauth2.authenticationSuccessHandler(oAuth2SuccessHandler()))
                 .addFilterAfter(customAuthoritiesFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
+    }
+
+    private RedirectServerAuthenticationSuccessHandler oAuth2SuccessHandler() {
+        RedirectServerAuthenticationSuccessHandler successHandler =
+                new RedirectServerAuthenticationSuccessHandler(DEFAULT_OAUTH2_SUCCESS_LOCATION);
+        successHandler.setRequestCache(new WebSessionServerRequestCache());
+        return successHandler;
     }
 }

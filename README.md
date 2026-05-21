@@ -9,7 +9,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 | `config` | Spring Cloud Config Server | `8888` | `2.1.7` |
 | `eureka` | Eureka Server | `8761` | `2.4.6` |
 | `admin` | Spring Boot Admin Server | `9090` | `2.11.4` |
-| `gateway` | Spring Cloud Gateway | `8000` | `5.0.1` |
+| `gateway` | Spring Cloud Gateway | `8000` | `5.0.2` |
 
 ## 요구 사항
 
@@ -37,7 +37,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 특정 모듈 이미지 빌드:
 
 ```bash
-./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.0.1
+./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.0.2
 ```
 
 ## 실행
@@ -92,5 +92,5 @@ ghcr.io/now-start/gateway:{version}
 config-2.1.7
 eureka-2.4.6
 admin-2.11.4
-gateway-5.0.1
+gateway-5.0.2
 ```

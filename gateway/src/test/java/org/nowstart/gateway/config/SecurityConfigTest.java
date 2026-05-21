@@ -85,14 +85,14 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("브라우저 HTML 요청은 SSO 로그인을 위해 로그인 페이지로 이동한다")
-    void browserHtmlRequestShouldRedirectToLogin() {
+    @DisplayName("브라우저 HTML 요청은 SSO 인증 시작 경로로 이동한다")
+    void browserHtmlRequestShouldRedirectToOAuth2Authorization() {
         webTestClient.get()
                 .uri("/config/other")
                 .header("Accept", "text/html")
                 .exchange()
                 .expectStatus().isFound()
-                .expectHeader().valueEquals("Location", "/login");
+                .expectHeader().valueEquals("Location", "/oauth2/authorization/nowstart");
     }
 
     @Test
@@ -153,6 +153,16 @@ class SecurityConfigTest {
                 .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, "wrong-secret"))
                 .exchange()
                 .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("USERS Basic 인증은 Admin UI 진입 경로를 통과한다")
+    void usersBasicAuthenticationShouldReachAdminRootPath() {
+        webTestClient.get()
+                .uri("/admin")
+                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
