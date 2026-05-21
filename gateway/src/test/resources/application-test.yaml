@@ -49,7 +49,5 @@ security:
     - "/admin/journal"
     - "/admin/external"
   publicPaths:
-    - "/config/actuator/busrefresh"
-    - "/*/actuator/**"
     - "/actuator/**"
     - "/nyang-nyang-bot/**"

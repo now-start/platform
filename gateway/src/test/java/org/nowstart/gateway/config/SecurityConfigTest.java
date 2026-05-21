@@ -58,19 +58,6 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("더 구체적인 public 경로(/config/actuator/busrefresh)가 generic한 admin 경로(/config/**)보다 우선순위가 높아야 한다")
-    void specificPublicPathShouldBePrioritizedOverGenericAdminPath() {
-        // given
-        String publicPath = "/config/actuator/busrefresh";
-
-        // when & then
-        webTestClient.get()
-                .uri(publicPath)
-                .exchange()
-                .expectStatus().isNotFound(); // permitAll() 이므로 404
-    }
-
-    @Test
     @DisplayName("public 경로가 아닌 다른 /config/** 경로는 인증이 필요하다")
     void genericAdminPathShouldStillRequireAuthentication() {
         // given
@@ -81,6 +68,25 @@ class SecurityConfigTest {
                 .uri(adminPath)
                 .exchange()
                 .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("config refresh 운영 경로는 인증이 필요하다")
+    void configRefreshPathShouldRequireAuthentication() {
+        webTestClient.post()
+                .uri("/internal/config-refresh")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    @DisplayName("내장 Basic 인증은 config refresh 운영 경로를 통과한다")
+    void basicAuthenticationShouldReachConfigRefreshPath() {
+        webTestClient.post()
+                .uri("/internal/config-refresh")
+                .headers(headers -> headers.setBasicAuth(BASIC_USERNAME, BASIC_PASSWORD))
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test

@@ -142,11 +142,12 @@ class AuthorizeExchangePropertiesTest {
         void thenAllConfiguredPathsShouldBeMappedCorrectly() {
             // given
             var users = List.of(
+                    "/admin/applications",
                     "/nyang-nyang-bot/authorization/**"
             );
             var publicPaths = List.of(
                     "/actuator/**",
-                    "/config/actuator/busrefresh"
+                    "/nyang-nyang-bot/**"
             );
             var props = givenProperties(users, publicPaths);
 

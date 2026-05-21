@@ -6,11 +6,19 @@ spring:
     gateway:
       server:
         webflux:
-          trusted-proxies: ".*"
+          trusted-proxies: '^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.).*'
           discovery:
             locator:
               enabled: true
               lower-case-service-id: true
+          routes:
+            - id: config-busrefresh
+              uri: http://config:8081
+              predicates:
+                - Method=POST
+                - Path=/internal/config-refresh
+              filters:
+                - SetPath=/actuator/busrefresh
           default-filters:
             - name: CircuitBreaker
   security:
@@ -45,5 +53,5 @@ security:
     - "/*/v3/api-docs"
     - "/admin/v3/api-docs/swagger-config"
   publicPaths:
-    - "/actuator/**"                      # 엑추에이터
+    - "/actuator/**"                      # 내부 Spring Boot Admin actuator 접근
     - "/nyang-nyang-bot/**"               # 자체 인증

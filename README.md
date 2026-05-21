@@ -48,7 +48,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 docker compose up -d
 ```
 
-`config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888` 설정으로 Config Server를 참조합니다.
+`config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888` 설정으로 Config Server를 참조합니다. 외부로 publish되는 포트는 `gateway`의 `8000`뿐이며, `config`, `eureka`, `admin`은 Docker 내부 네트워크에서만 접근합니다.
 
 ## 설정
 
@@ -58,7 +58,13 @@ docker compose up -d
 - `config/config/{service}/{service}.yaml`: 서비스별 설정
 - `config/common/test.yaml`: 테스트용 공통 설정
 
-Config 설정 변경이 `main`에 push되면 `.github/workflows/config-refresh.yaml`이 Config Server의 `/actuator/busrefresh`를 호출합니다.
+Config 설정 변경이 `main`에 push되면 `.github/workflows/config-refresh.yaml`이 Gateway의 `/internal/config-refresh`를 호출하고, Gateway가 내부 `config:8081/actuator/busrefresh`로 전달합니다.
+
+필요한 GitHub Actions secrets:
+
+- `CONFIG_REFRESH_URL`: `https://{gateway-domain}/internal/config-refresh`
+- `CONFIG_REFRESH_USERNAME`: Gateway 관리자 Basic 인증 사용자
+- `CONFIG_REFRESH_PASSWORD`: Gateway 관리자 Basic 인증 비밀번호
 
 ## CI/CD
 

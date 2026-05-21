@@ -12,11 +12,24 @@ jobs:
 
     steps:
       - name: Trigger Bus Refresh
+        env:
+          CONFIG_REFRESH_URL: ${{ secrets.CONFIG_REFRESH_URL }}
+          CONFIG_REFRESH_USERNAME: ${{ secrets.CONFIG_REFRESH_USERNAME }}
+          CONFIG_REFRESH_PASSWORD: ${{ secrets.CONFIG_REFRESH_PASSWORD }}
         run: |
-          CONFIG_SERVER_URL="${{ secrets.CONFIG_SERVER_URL || 'http://localhost:8888' }}"
+          if [ -z "$CONFIG_REFRESH_URL" ]; then
+            echo "CONFIG_REFRESH_URL secret is required"
+            exit 1
+          fi
+
+          if [ -z "$CONFIG_REFRESH_USERNAME" ] || [ -z "$CONFIG_REFRESH_PASSWORD" ]; then
+            echo "CONFIG_REFRESH_USERNAME and CONFIG_REFRESH_PASSWORD secrets are required"
+            exit 1
+          fi
 
           STATUS=$(curl -o /dev/null -s -w "%{http_code}" \
-            -X POST "$CONFIG_SERVER_URL/actuator/busrefresh" \
+            -u "$CONFIG_REFRESH_USERNAME:$CONFIG_REFRESH_PASSWORD" \
+            -X POST "$CONFIG_REFRESH_URL" \
             --connect-timeout 5 \
             --max-time 15)
 
