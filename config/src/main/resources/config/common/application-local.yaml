@@ -27,3 +27,7 @@ management:
       enabled: false
     rabbit:
       enabled: false
+
+otel:
+  sdk:
+    disabled: true
