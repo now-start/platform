@@ -1,4 +1,4 @@
-version = '2.1.9'
+version = '2.1.10'
 
 dependencies {
     implementation 'org.springframework.cloud:spring-cloud-config-server'

@@ -6,10 +6,10 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.9` |
-| `eureka` | Eureka Server | `8761` | `2.4.7` |
-| `admin` | Spring Boot Admin Server | `9090` | `2.11.5` |
-| `gateway` | Spring Cloud Gateway | `8000` | `5.1.0` |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.10` |
+| `eureka` | Eureka Server | `8761` | `2.4.8` |
+| `admin` | Spring Boot Admin Server | `9090` | `2.11.6` |
+| `gateway` | Spring Cloud Gateway | `8000` | `5.1.1` |
 
 ## 요구 사항
 
@@ -37,7 +37,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 특정 모듈 이미지 빌드:
 
 ```bash
-./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.1.0
+./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.1.1
 ```
 
 ## 실행
@@ -81,8 +81,8 @@ ghcr.io/now-start/gateway:{version}
 릴리스 이벤트는 `{module}-{version}` 태그 prefix로 모듈을 구분합니다.
 
 ```text
-config-2.1.9
-eureka-2.4.7
-admin-2.11.5
-gateway-5.1.0
+config-2.1.10
+eureka-2.4.8
+admin-2.11.6
+gateway-5.1.1
 ```
