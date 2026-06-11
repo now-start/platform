@@ -11,15 +11,6 @@ spring:
             locator:
               enabled: true
               lower-case-service-id: true
-          routes:
-            - id: config-busrefresh
-              order: -1
-              uri: http://config:8081
-              predicates:
-                - Method=POST
-                - Path=/config/actuator/busrefresh
-              filters:
-                - SetPath=/actuator/busrefresh
           default-filters:
             - name: CircuitBreaker
   security:
@@ -58,5 +49,3 @@ security:
       - "/admin/swagger-ui/**"
       - "/*/v3/api-docs"
       - "/admin/v3/api-docs/swagger-config"
-    ADMINISTRATORS:
-      - "/config/actuator/busrefresh"

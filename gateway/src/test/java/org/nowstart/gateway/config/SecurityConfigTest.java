@@ -78,15 +78,6 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("config refresh 운영 경로는 인증이 필요하다")
-    void configRefreshPathShouldRequireAuthentication() {
-        webTestClient.post()
-                .uri("/config/actuator/busrefresh")
-                .exchange()
-                .expectStatus().isUnauthorized();
-    }
-
-    @Test
     @DisplayName("브라우저 HTML 요청은 SSO 인증 시작 경로로 이동한다")
     void browserHtmlRequestShouldRedirectToOAuth2Authorization() {
         webTestClient.get()
@@ -109,31 +100,10 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("HTML 요청이면 config busrefresh 경로도 SSO 인증 시작 경로로 이동한다")
-    void configBusRefreshBrowserHtmlRequestShouldRedirectToOAuth2Authorization() {
-        webTestClient.post()
-                .uri("/config/actuator/busrefresh")
-                .header("Accept", "text/html")
-                .exchange()
-                .expectStatus().isFound()
-                .expectHeader().valueEquals("Location", "/oauth2/authorization/nowstart");
-    }
-
-    @Test
     @DisplayName("actuator 경로는 내부 관리 도구 접근을 위해 public으로 통과한다")
     void actuatorPathShouldBePublic() {
         webTestClient.get()
                 .uri("/actuator/env")
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    @DisplayName("내장 Basic 인증은 config refresh 운영 경로를 통과한다")
-    void basicAuthenticationShouldReachConfigRefreshPath() {
-        webTestClient.post()
-                .uri("/config/actuator/busrefresh")
-                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
                 .exchange()
                 .expectStatus().isNotFound();
     }

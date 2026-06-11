@@ -16,7 +16,7 @@ class AuthorizeExchangePropertiesTest {
     void rulesShouldBeMappedToPathRules() {
         // given
         var refreshRule = new AuthorizeExchangeProperties.Rule();
-        refreshRule.setPath("/config/actuator/busrefresh");
+        refreshRule.setPath("/admin/settings");
         refreshRule.setRoles(List.of(Role.ADMINISTRATORS));
 
         var props = new AuthorizeExchangeProperties();
@@ -27,7 +27,7 @@ class AuthorizeExchangePropertiesTest {
 
         // then
         then(rules).hasSize(1);
-        then(rules.getFirst().path()).isEqualTo("/config/actuator/busrefresh");
+        then(rules.getFirst().path()).isEqualTo("/admin/settings");
         then(rules.getFirst().roles()).containsExactly(Role.ADMINISTRATORS);
     }
 
@@ -78,7 +78,7 @@ class AuthorizeExchangePropertiesTest {
         var props = new AuthorizeExchangeProperties();
         Map<Role, List<String>> rolePaths = new LinkedHashMap<>();
         rolePaths.put(Role.USERS, List.of("/admin", "/admin/applications"));
-        rolePaths.put(Role.ADMINISTRATORS, List.of("/config/actuator/busrefresh"));
+        rolePaths.put(Role.ADMINISTRATORS, List.of("/admin/settings"));
         props.setRolePaths(rolePaths);
 
         // when
@@ -87,7 +87,7 @@ class AuthorizeExchangePropertiesTest {
         // then
         then(rules).hasSize(3);
         then(rules).extracting(AuthorizeExchangeProperties.PathRule::path)
-                .containsExactly("/admin", "/admin/applications", "/config/actuator/busrefresh");
+                .containsExactly("/admin", "/admin/applications", "/admin/settings");
         then(rules).extracting(AuthorizeExchangeProperties.PathRule::roles)
                 .containsExactly(
                         List.of(Role.USERS),

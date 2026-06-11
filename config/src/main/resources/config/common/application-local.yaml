@@ -4,29 +4,10 @@ spring:
       enabled: false
     discovery:
       enabled: false
-    bus:
-      enabled: false
-  data:
-    redis:
-      repositories:
-        enabled: false
-  rabbitmq:
-    listener:
-      simple:
-        auto-startup: false
-      direct:
-        auto-startup: false
 
 eureka:
   client:
     enabled: false
-
-management:
-  health:
-    redis:
-      enabled: false
-    rabbit:
-      enabled: false
 
 otel:
   sdk:

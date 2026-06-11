@@ -6,10 +6,10 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.7` |
-| `eureka` | Eureka Server | `8761` | `2.4.6` |
-| `admin` | Spring Boot Admin Server | `9090` | `2.11.4` |
-| `gateway` | Spring Cloud Gateway | `8000` | `5.0.2` |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.9` |
+| `eureka` | Eureka Server | `8761` | `2.4.7` |
+| `admin` | Spring Boot Admin Server | `9090` | `2.11.5` |
+| `gateway` | Spring Cloud Gateway | `8000` | `5.1.0` |
 
 ## 요구 사항
 
@@ -37,7 +37,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 특정 모듈 이미지 빌드:
 
 ```bash
-./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.0.2
+./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.1.0
 ```
 
 ## 실행
@@ -57,14 +57,6 @@ docker compose up -d
 - `config/common/application.yaml`: 공통 설정
 - `config/config/{service}/{service}.yaml`: 서비스별 설정
 - `config/common/test.yaml`: 테스트용 공통 설정
-
-Config 설정 변경이 `main`에 push되면 `.github/workflows/config-refresh.yaml`이 Gateway의 `/internal/config-refresh`를 호출하고, Gateway가 내부 `config:8081/actuator/busrefresh`로 전달합니다.
-
-필요한 GitHub Actions secrets:
-
-- `CONFIG_REFRESH_URL`: `https://{gateway-domain}/internal/config-refresh`
-- `CONFIG_REFRESH_USERNAME`: Gateway 관리자 Basic 인증 사용자
-- `CONFIG_REFRESH_PASSWORD`: Gateway 관리자 Basic 인증 비밀번호
 
 ## CI/CD
 
@@ -89,8 +81,8 @@ ghcr.io/now-start/gateway:{version}
 릴리스 이벤트는 `{module}-{version}` 태그 prefix로 모듈을 구분합니다.
 
 ```text
-config-2.1.7
-eureka-2.4.6
-admin-2.11.4
-gateway-5.0.2
+config-2.1.9
+eureka-2.4.7
+admin-2.11.5
+gateway-5.1.0
 ```
