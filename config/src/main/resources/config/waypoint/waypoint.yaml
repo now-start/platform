@@ -1,7 +1,7 @@
 spring:
   ai:
     ollama:
-      base-url: http://localhost:11434
+      base-url: '{cipher}530cfa0c91278bb5876c7d04794612faf8abf85ddad6f1d7499f29771cfb77ca6c811dcf14794d0b73625f68cb0635c8'
       chat:
         model: gemma4:e4b
         temperature: 0.2
