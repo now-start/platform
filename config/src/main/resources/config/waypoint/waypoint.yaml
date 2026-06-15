@@ -5,6 +5,12 @@ spring:
       chat:
         model: gemma4:e4b
         temperature: 0.2
+        top-p: 0.9
+        top-k: 40
+        repeat-penalty: 1.1
+        num-ctx: 8192
+        num-predict: 512
+        keep-alive: 10m
   datasource:
     url: '{cipher}301934c61b2f1ca401facb9a2950b0f78b8c0013ad6ee02c5aad61696a5ba919e6d0435c55e6575f6d1e4312cdfc5d4f4c1ca58a0f78dc8cc82597f9227c4ea4'
     username: '{cipher}682b81ac5a77cecbcd41b8062e083887478b3eac6fe48e96be19a80b7b33ea8b'
