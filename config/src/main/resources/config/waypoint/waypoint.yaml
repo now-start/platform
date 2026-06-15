@@ -1,0 +1,42 @@
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        model: gemma4:e4b
+        temperature: 0.2
+  datasource:
+    url: '{cipher}301934c61b2f1ca401facb9a2950b0f78b8c0013ad6ee02c5aad61696a5ba919e6d0435c55e6575f6d1e4312cdfc5d4f4c1ca58a0f78dc8cc82597f9227c4ea4'
+    username: '{cipher}682b81ac5a77cecbcd41b8062e083887478b3eac6fe48e96be19a80b7b33ea8b'
+    password: '{cipher}f8c5129f50e110db11d47b752a286ebfdc301307cb53cf2842cae548861519e0cf8057b70eb985a1c8f434a3e9261c04'
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 200
+        order_inserts: true
+        order_updates: true
+
+waypoint:
+  tago:
+    base-url: http://apis.data.go.kr/1613000
+    service-key: '{cipher}3993d0eee477d4eaabf11aa630e33f23a2f7f53008debb28aa9c695c1b64f8def5f941ab0e9c6f7f3016af086496c158b8bd26fac81af37797d256c045b5cf6abb74f271f4e3d146e51d60129781e324304f5dc633bf80c013bb49cebbcd2a946063aeb9be55a85e62ff70f01e9222aa'
+    city-code: 38010
+    num-of-rows: 1000
+    connect-timeout: 5s
+    read-timeout: 20s
+    collection:
+      reference-data-fixed-delay: 24h
+      reference-data-initial-delay: 24h
+      location-fixed-delay: 1m
+      location-initial-delay: 0s
+      reference-data-concurrency: 8
+      location-concurrency: 8
+      arrival-concurrency: 8
+      rate-limit: 15
+  anomaly:
+    headway-wide: 30m
+    headway-narrow: 3m
+    location-stale: 5m
