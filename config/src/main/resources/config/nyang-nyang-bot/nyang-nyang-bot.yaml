@@ -7,12 +7,6 @@ spring:
     url: '{cipher}a5a8114474e5fcd6a9f0ba8d6ca8a274026ffccca977e27808c3b7ac88ff96149a87008bfae0909d1bea323a08adb5292db5952b3077f0e7e91aed9389ce9bea47aae7f35d4abd5506aeffc6312db4d0'
     username: '{cipher}e76dd74451fcf3902439fc1e0c96ebbb3fc7efbcb5c37972f5db8a81d6ceb1be'
     password: '{cipher}076e73cea7ab188f178eba197daa6c558ed9f174772aea76e5234192ab9f986002ad50eebd9dec8ef31a49604c76edd8'
-  flyway:
-    clean-disabled: true
-    baseline-on-migrate: true
-    baseline-version: 1
-    baseline-description: main schema before flyway
-
 google:
   spreadsheet:
     id: '{cipher}1cc1d4d93c6867c06be9538b15c34e01fea3c27e92fd32377fc813d35a40efa3128c5bc4afa121618dd817c0e8dbcbc2ed091730626d3759cade6d1536cacd34'
