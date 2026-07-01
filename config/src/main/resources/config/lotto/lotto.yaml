@@ -15,9 +15,13 @@ spring:
 lotto:
   max-retries: 3
   retry-delay-ms: 300000
+  max-concurrent-sessions: 3
+  trace-enabled: false
+  user-task-timeout-ms: 1800000
   cron:
     check: 0 0 22 * * 6
     buy: 0 0 9 * * 0
+    zone: Asia/Seoul
   users:
     - id: '{cipher}586873f6058f8ed1990f9b3b7b0c98f3b0c77cb1aa648b166f19e262cdfe3716'
       password: '{cipher}3e6f7fcf442562be2938197ee99d7477f6900c5eb06ae2308d7f904d56655d4d'
