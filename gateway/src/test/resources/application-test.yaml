@@ -13,6 +13,11 @@ spring:
     config:
       enabled: false
   security:
+    user:
+      name: 'basic-admin'
+      password: '{bcrypt}$2a$10$Y0HAJQ/lEa/63WX7RuNr.eBIVKUOgr9QH6C/IKL.Es4jvXnabr7XO'
+      roles:
+        - 'ADMINISTRATORS'
     oauth2:
       client:
         registration:
@@ -30,28 +35,3 @@ spring:
 eureka:
   client:
     enabled: false
-
-security:
-  basicUsers:
-    - username: "basic-admin"
-      password: "{noop}admin-secret"
-      roles:
-        - "ADMINISTRATORS"
-    - username: "basic-user"
-      password: "{noop}user-secret"
-      roles:
-        - "USERS"
-  defaultRoles:
-    - "ADMINISTRATORS"
-  publicPaths:
-    - "/actuator/**"
-    - "/nyang-nyang-bot/**"
-  rolePaths:
-    USERS:
-      - "/*/v3/api-docs"
-      - "/admin"
-      - "/admin/"
-      - "/admin/applications"
-      - "/admin/wallboard"
-      - "/admin/journal"
-      - "/admin/external"

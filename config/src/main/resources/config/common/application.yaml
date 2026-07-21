@@ -3,10 +3,6 @@ server:
   forward-headers-strategy: framework
 
 spring:
-  cloud:
-    circuitbreaker:
-      resilience4j:
-        disable-time-limiter: true
   jmx:
     enabled: true
 

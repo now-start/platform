@@ -6,10 +6,10 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.10` |
-| `eureka` | Eureka Server | `8761` | `2.4.8` |
-| `admin` | Spring Boot Admin Server | `9090` | `2.11.6` |
-| `gateway` | Spring Cloud Gateway | `8000` | `5.1.1` |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.11` |
+| `eureka` | Eureka Server | `8761` | `2.4.9` |
+| `admin` | Spring Boot Admin Server | `9090` | `2.11.7` |
+| `gateway` | Spring Cloud Gateway | `8000` | `6.0.0` |
 
 ## 요구 사항
 
@@ -37,7 +37,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 특정 모듈 이미지 빌드:
 
 ```bash
-./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:5.1.1
+./gradlew :gateway:bootBuildImage --imageName=ghcr.io/now-start/gateway:6.0.0
 ```
 
 ## 실행
@@ -47,6 +47,8 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 ```bash
 docker compose up -d
 ```
+
+Gateway Basic 비밀번호는 Config Server의 `{cipher}` 값으로 관리하며, 복호화 결과는 `{bcrypt}` prefix가 포함된 BCrypt 해시입니다. 원문 비밀번호와 Synology OAuth client secret은 사용하지 않습니다.
 
 `config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888` 설정으로 Config Server를 참조합니다. 외부로 publish되는 포트는 `gateway`의 `8000`뿐이며, `config`, `eureka`, `admin`은 Docker 내부 네트워크에서만 접근합니다.
 
@@ -64,7 +66,7 @@ docker compose up -d
 
 - `{module}-{version}` tag가 없으면 빌드, 이미지 푸시, 릴리스 생성
 - `{module}-{version}` tag가 이미 있으면 해당 모듈 빌드/이미지 푸시 생략
-- 새 이미지를 만들려면 해당 모듈의 `build.gradle` patch version을 올립니다.
+- 새 이미지를 만들려면 변경 영향에 맞게 해당 모듈의 `build.gradle` version을 올립니다.
 - `release` 이벤트도 4개 모듈을 reusable workflow에 전달하며, reusable workflow가 release tag의 module prefix를 확인해 해당 모듈만 프로모트/롤백합니다.
 
 이미지는 모듈명을 기준으로 생성됩니다.
@@ -81,8 +83,8 @@ ghcr.io/now-start/gateway:{version}
 릴리스 이벤트는 `{module}-{version}` 태그 prefix로 모듈을 구분합니다.
 
 ```text
-config-2.1.10
-eureka-2.4.8
-admin-2.11.6
-gateway-5.1.1
+config-2.1.11
+eureka-2.4.9
+admin-2.11.7
+gateway-6.0.0
 ```

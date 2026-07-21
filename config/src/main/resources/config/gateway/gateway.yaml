@@ -11,9 +11,12 @@ spring:
             locator:
               enabled: true
               lower-case-service-id: true
-          default-filters:
-            - name: CircuitBreaker
   security:
+    user:
+      name: 'gateway-api'
+      password: '{cipher}fec9e711f06969cb0f07d0596be8301b0e08d90d7f69344ef31ec66a760baba03637db9952a32c307084fd4db371eafc760e9b105ddef78b7518c011edcc0b0472fbd8aaaa59f33a7412d994dd64314c'
+      roles:
+        - 'ADMINISTRATORS'
     oauth2:
       client:
         registration:
@@ -24,28 +27,3 @@ spring:
         provider:
           nowstart:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
-
-security:
-  basicUsers:
-    - username: ${spring.security.oauth2.client.registration.nowstart.client-id}
-      password: '{noop}${spring.security.oauth2.client.registration.nowstart.client-secret}'
-      roles:
-        - "ADMINISTRATORS"
-  defaultRoles:
-    - "ADMINISTRATORS"
-  publicPaths:
-    - "/actuator/**"                            # 내부 Spring Boot Admin actuator 접근
-    - "/nyang-nyang-bot/**"                     # 자체 인증
-  rolePaths:
-    USERS:
-      - "/admin"
-      - "/admin/"
-      - "/admin/applications"
-      - "/admin/wallboard"
-      - "/admin/journal"
-      - "/admin/external"
-      - "/admin/assets/**"
-      - "/admin/*.*"
-      - "/admin/swagger-ui/**"
-      - "/*/v3/api-docs"
-      - "/admin/v3/api-docs/swagger-config"

@@ -1,23 +1,29 @@
 package org.nowstart.gateway.config;
 
+import static org.assertj.core.api.BDDAssertions.then;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.nowstart.gateway.data.AuthorizeExchangeProperties;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.actuate.audit.InMemoryAuditEventRepository;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
 import org.springframework.boot.actuate.web.exchanges.InMemoryHttpExchangeRepository;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.security.autoconfigure.ReactiveUserDetailsServiceAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.reactive.ReactiveWebSecurityAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webflux.autoconfigure.WebFluxAutoConfiguration;
-import org.springframework.cloud.autoconfigure.RefreshAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.ActiveProfiles;
@@ -32,22 +38,17 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @SpringBootTest(classes = {
         SecurityConfig.class,
         GatewayAuthenticationEntryPoint.class,
-        GatewayAuthorizationRules.class,
-        GatewayUserDetailsServiceConfig.class,
-        AuthorizeExchangeProperties.class,
         SecurityConfigTest.TestConfig.class
 })
 @ImportAutoConfiguration({
         ReactiveWebSecurityAutoConfiguration.class,
-        WebFluxAutoConfiguration.class,
-        RefreshAutoConfiguration.class
+        ReactiveUserDetailsServiceAutoConfiguration.class,
+        WebFluxAutoConfiguration.class
 })
 class SecurityConfigTest {
 
     private static final String BASIC_ADMIN_USERNAME = "basic-admin";
     private static final String BASIC_ADMIN_PASSWORD = "admin-secret";
-    private static final String BASIC_USER_USERNAME = "basic-user";
-    private static final String BASIC_USER_PASSWORD = "user-secret";
 
     @Autowired
     private ApplicationContext context;
@@ -99,13 +100,24 @@ class SecurityConfigTest {
                 .expectHeader().valueEquals("Location", "/oauth2/authorization/nowstart");
     }
 
-    @Test
-    @DisplayName("actuator 경로는 내부 관리 도구 접근을 위해 public으로 통과한다")
-    void actuatorPathShouldBePublic() {
+    @ParameterizedTest
+    @ValueSource(strings = {"/actuator/env", "/nyang-nyang-bot/test"})
+    @DisplayName("공개 경로는 인증 없이 통과한다")
+    void publicPathShouldBePublic(String path) {
         webTestClient.get()
-                .uri("/actuator/env")
+                .uri(path)
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/actuator/v3/api-docs", "/nyang-nyang-bot/v3/api-docs"})
+    @DisplayName("공개 경로와 겹치는 구체적인 USERS 경로는 인증이 필요하다")
+    void specificUsersPathShouldTakePrecedenceOverPublicPath(String path) {
+        webTestClient.get()
+                .uri(path)
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 
     @Test
@@ -119,17 +131,21 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("인증된 요청은 다운스트림 핸들러에 내부 인증 헤더를 전달한다")
-    void authenticatedRequestShouldPassTrustedAuthHeadersToDownstreamHandler() {
+    @DisplayName("인증된 요청은 기존 Authorization과 Cookie를 유지한다")
+    void authenticatedRequestShouldPreserveCredentials() {
+        String basicAuthorization = "Basic " + Base64.getEncoder().encodeToString(
+                (BASIC_ADMIN_USERNAME + ":" + BASIC_ADMIN_PASSWORD).getBytes(StandardCharsets.UTF_8)
+        );
+
         webTestClient.get()
                 .uri("/echo-headers")
                 .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
+                .cookie("SESSION", "test-session")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.user").isEqualTo(BASIC_ADMIN_USERNAME)
-                .jsonPath("$.roles").isEqualTo("ADMINISTRATORS")
-                .jsonPath("$.authType").isEqualTo("UsernamePasswordAuthenticationToken");
+                .jsonPath("$.authorization").isEqualTo(basicAuthorization)
+                .jsonPath("$.cookie").isEqualTo("SESSION=test-session");
     }
 
     @Test
@@ -153,31 +169,39 @@ class SecurityConfigTest {
     }
 
     @Test
-    @DisplayName("USERS Basic 인증은 Admin UI 진입 경로를 통과한다")
-    void usersBasicAuthenticationShouldReachAdminRootPath() {
-        webTestClient.get()
-                .uri("/admin")
-                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
+    @DisplayName("Basic 사용자 생성은 Spring Boot 표준 자동 설정에 위임한다")
+    void basicUserShouldUseSpringBootAutoConfiguration() {
+        then(context.containsBean("gatewayUserDetailsServiceConfig")).isFalse();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/admin",
+            "/admin/",
+            "/admin/applications",
+            "/admin/wallboard",
+            "/admin/journal",
+            "/admin/external",
+            "/admin/assets/app.js",
+            "/admin/index.html",
+            "/admin/swagger-ui/index.html",
+            "/service/v3/api-docs",
+            "/admin/v3/api-docs/swagger-config"
+    })
+    @DisplayName("USERS OAuth 인증은 명시된 사용자 경로를 통과한다")
+    void usersOAuthAuthenticationShouldReachUsersProtectedPath(String path) {
+        usersWebTestClient().get()
+                .uri(path)
                 .exchange()
                 .expectStatus().isNotFound();
     }
 
-    @Test
-    @DisplayName("USERS Basic 인증은 명시된 사용자 경로를 통과한다")
-    void usersBasicAuthenticationShouldReachUsersProtectedPath() {
-        webTestClient.get()
-                .uri("/admin/applications")
-                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
-                .exchange()
-                .expectStatus().isNotFound();
-    }
-
-    @Test
-    @DisplayName("USERS Basic 인증은 기본 관리자 경로를 통과하지 못한다")
-    void usersBasicAuthenticationShouldNotReachDefaultAdminPath() {
-        webTestClient.get()
-                .uri("/config/other")
-                .headers(headers -> headers.setBasicAuth(BASIC_USER_USERNAME, BASIC_USER_PASSWORD))
+    @ParameterizedTest
+    @ValueSource(strings = {"/config/other", "/admin/settings"})
+    @DisplayName("USERS OAuth 인증은 명시되지 않은 관리자 경로를 통과하지 못한다")
+    void usersOAuthAuthenticationShouldNotReachAdminPath(String path) {
+        usersWebTestClient().get()
+                .uri(path)
                 .exchange()
                 .expectStatus().isForbidden();
     }
@@ -200,6 +224,11 @@ class SecurityConfigTest {
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
     }
 
+    private WebTestClient usersWebTestClient() {
+        return webTestClient.mutateWith(SecurityMockServerConfigurers.mockOAuth2Login()
+                .authorities(new SimpleGrantedAuthority("ROLE_USERS")));
+    }
+
     @TestConfiguration
     static class TestConfig {
         @Bean
@@ -216,9 +245,8 @@ class SecurityConfigTest {
         public RouterFunction<ServerResponse> echoHeadersRoute() {
             return RouterFunctions.route()
                     .GET("/echo-headers", request -> ServerResponse.ok().bodyValue(Map.of(
-                            "user", headerOrEmpty(request, "X-Authenticated-User"),
-                            "roles", headerOrEmpty(request, "X-Authenticated-Roles"),
-                            "authType", headerOrEmpty(request, "X-Authenticated-Auth-Type")
+                            "authorization", headerOrEmpty(request, "Authorization"),
+                            "cookie", headerOrEmpty(request, "Cookie")
                     )))
                     .build();
         }

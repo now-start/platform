@@ -7,8 +7,10 @@ import java.util.Map;
 import java.util.Objects;
 import org.jspecify.annotations.NonNull;
 import org.nowstart.gateway.data.Role;
-import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyAuthoritiesMapper;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,84 +25,53 @@ import reactor.core.publisher.Mono;
 public class CustomAuthoritiesFilter implements WebFilter {
 
     private static final String GROUPS_ATTRIBUTE = "groups";
-    private static final String ROLE_PREFIX = "ROLE_";
-    private static final String AUTHENTICATED_USER_HEADER = "X-Authenticated-User";
-    private static final String AUTHENTICATED_ROLES_HEADER = "X-Authenticated-Roles";
-    private static final String AUTHENTICATED_AUTH_TYPE_HEADER = "X-Authenticated-Auth-Type";
-    private static final List<String> TRUSTED_AUTH_HEADERS = List.of(
-            AUTHENTICATED_USER_HEADER,
-            AUTHENTICATED_ROLES_HEADER,
-            AUTHENTICATED_AUTH_TYPE_HEADER
-    );
+    private final RoleHierarchyAuthoritiesMapper authoritiesMapper;
+
+    public CustomAuthoritiesFilter(RoleHierarchy roleHierarchy) {
+        this.authoritiesMapper = new RoleHierarchyAuthoritiesMapper(roleHierarchy);
+    }
 
     @Override
     public @NonNull Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull WebFilterChain chain) {
-        ServerWebExchange sanitizedExchange = removeTrustedAuthHeaders(exchange);
-
         return ReactiveSecurityContextHolder.getContext()
                 .map(ctx -> {
                     Authentication authentication = ctx.getAuthentication();
                     if (authentication == null) {
-                        return chain.filter(sanitizedExchange);
+                        return chain.filter(exchange);
                     }
 
                     if (authentication instanceof AnonymousAuthenticationToken) {
-                        return chain.filter(sanitizedExchange);
+                        return chain.filter(exchange);
                     }
 
                     Authentication mappedAuthentication = mapAuthentication(authentication);
                     ctx.setAuthentication(mappedAuthentication);
 
-                    ServerWebExchange authenticatedExchange = addTrustedAuthHeaders(
-                            sanitizedExchange,
-                            mappedAuthentication
-                    );
-                    return chain.filter(authenticatedExchange)
+                    return chain.filter(exchange)
                             .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(ctx)));
                 })
-                .switchIfEmpty(Mono.fromSupplier(() -> chain.filter(sanitizedExchange)))
+                .switchIfEmpty(Mono.fromSupplier(() -> chain.filter(exchange)))
                 .flatMap(mono -> mono);
-    }
-
-    private ServerWebExchange removeTrustedAuthHeaders(ServerWebExchange exchange) {
-        ServerHttpRequest request = exchange.getRequest()
-                .mutate()
-                .headers(headers -> TRUSTED_AUTH_HEADERS.forEach(headers::remove))
-                .build();
-        return exchange.mutate().request(request).build();
-    }
-
-    private ServerWebExchange addTrustedAuthHeaders(ServerWebExchange exchange, Authentication authentication) {
-        ServerHttpRequest request = exchange.getRequest()
-                .mutate()
-                .headers(headers -> {
-                    TRUSTED_AUTH_HEADERS.forEach(headers::remove);
-                    headers.set(AUTHENTICATED_USER_HEADER, authentication.getName());
-                    headers.set(AUTHENTICATED_AUTH_TYPE_HEADER, authentication.getClass().getSimpleName());
-
-                    List<String> roles = normalizedRoles(authentication.getAuthorities());
-                    if (!roles.isEmpty()) {
-                        headers.set(AUTHENTICATED_ROLES_HEADER, String.join(",", roles));
-                    }
-                })
-                .build();
-        return exchange.mutate().request(request).build();
-    }
-
-    private List<String> normalizedRoles(Collection<? extends GrantedAuthority> authorities) {
-        return authorities.stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(authority -> authority.startsWith(ROLE_PREFIX))
-                .map(authority -> authority.substring(ROLE_PREFIX.length()))
-                .distinct()
-                .toList();
     }
 
     private Authentication mapAuthentication(Authentication authentication) {
         if (authentication instanceof OAuth2AuthenticationToken auth) {
             return oAuth2Authentication(auth);
         }
+        if (authentication instanceof UsernamePasswordAuthenticationToken auth && auth.isAuthenticated()) {
+            return usernamePasswordAuthentication(auth);
+        }
         return authentication;
+    }
+
+    private Authentication usernamePasswordAuthentication(UsernamePasswordAuthenticationToken auth) {
+        var mappedAuthentication = UsernamePasswordAuthenticationToken.authenticated(
+                auth.getPrincipal(),
+                auth.getCredentials(),
+                expandAuthorities(auth.getAuthorities())
+        );
+        mappedAuthentication.setDetails(auth.getDetails());
+        return mappedAuthentication;
     }
 
     private Authentication oAuth2Authentication(OAuth2AuthenticationToken auth) {
@@ -116,7 +87,13 @@ public class CustomAuthoritiesFilter implements WebFilter {
         }
 
         List<GrantedAuthority> newAuthorities = mapGroupsToAuthorities(groupNames, auth.getAuthorities());
-        return new OAuth2AuthenticationToken(principal, newAuthorities, auth.getAuthorizedClientRegistrationId());
+        var mappedAuthentication = new OAuth2AuthenticationToken(
+                principal,
+                expandAuthorities(newAuthorities),
+                auth.getAuthorizedClientRegistrationId()
+        );
+        mappedAuthentication.setDetails(auth.getDetails());
+        return mappedAuthentication;
     }
 
     private List<GrantedAuthority> mapGroupsToAuthorities(Collection<String> groups, Collection<GrantedAuthority> existingAuthorities) {
@@ -129,12 +106,15 @@ public class CustomAuthoritiesFilter implements WebFilter {
             groups.stream()
                     .map(Role::from)
                     .filter(Objects::nonNull)
-                    .flatMap(role -> role.getAllIncluded().stream())
                     .map(Role::authority)
                     .map(SimpleGrantedAuthority::new)
                     .forEach(authority -> byName.putIfAbsent(authority.getAuthority(), authority));
         }
 
         return List.copyOf(byName.values());
+    }
+
+    private List<GrantedAuthority> expandAuthorities(Collection<? extends GrantedAuthority> authorities) {
+        return List.copyOf(authoritiesMapper.mapAuthorities(authorities));
     }
 }

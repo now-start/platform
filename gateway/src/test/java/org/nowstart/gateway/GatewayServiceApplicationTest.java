@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.client.circuitbreaker.ReactiveCircuitBreakerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
@@ -40,6 +41,12 @@ class GatewayServiceApplicationTest {
     void beansAreCreated() {
         then(httpExchangeRepository).isNotNull();
         then(auditEventRepository).isNotNull();
+    }
+
+    @Test
+    @DisplayName("전역 CircuitBreaker가 애플리케이션 컨텍스트에 없어야 한다")
+    void circuitBreakerShouldNotBeConfigured() {
+        then(applicationContext.getBeanNamesForType(ReactiveCircuitBreakerFactory.class)).isEmpty();
     }
 
 }

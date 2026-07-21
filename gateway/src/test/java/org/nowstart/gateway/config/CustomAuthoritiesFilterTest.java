@@ -2,6 +2,7 @@ package org.nowstart.gateway.config;
 
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.mock;
 import static org.mockito.Mockito.times;
@@ -14,13 +15,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,7 +38,50 @@ import reactor.test.StepVerifier;
 
 class CustomAuthoritiesFilterTest {
 
-    private final CustomAuthoritiesFilter filter = new CustomAuthoritiesFilter();
+    private final CustomAuthoritiesFilter filter = new CustomAuthoritiesFilter(
+            RoleHierarchyImpl.fromHierarchy("ROLE_ADMINISTRATORS > ROLE_USERS")
+    );
+
+    @Test
+    @DisplayName("ADMINISTRATORS Basic 인증에는 USERS 계층 권한도 추가된다")
+    void thenBasicAdministratorShouldIncludeUsersAuthority() {
+        // given
+        var authentication = UsernamePasswordAuthenticationToken.authenticated(
+                "basic-admin",
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMINISTRATORS"))
+        );
+        var context = givenSecurityContext(authentication);
+
+        // when
+        var authorities = whenFilterExecuted(context);
+
+        // then
+        then(authorities).containsExactlyInAnyOrder("ROLE_ADMINISTRATORS", "ROLE_USERS");
+    }
+
+    @Test
+    @DisplayName("권한 매핑은 요청을 변경하지 않고 원본 exchange를 전달한다")
+    void thenAuthorityMappingShouldPassOriginalExchange() {
+        // given
+        var authentication = UsernamePasswordAuthenticationToken.authenticated(
+                "basic-admin",
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_ADMINISTRATORS"))
+        );
+        var context = givenSecurityContext(authentication);
+        var exchange = givenExchange();
+        var chain = mock(WebFilterChain.class);
+        given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
+
+        // when
+        filter.filter(exchange, chain)
+                .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+                .block();
+
+        // then
+        verify(chain).filter(same(exchange));
+    }
 
     // ─── 공통 헬퍼 ───────────────────────────────────────────────────────────
 
@@ -181,94 +226,6 @@ class CustomAuthoritiesFilterTest {
         }
     }
 
-    @Nested
-    @DisplayName("내부 인증 헤더 처리")
-    class TrustedAuthenticationHeaders {
-
-        @Test
-        @DisplayName("인증되지 않은 요청의 외부 인증 헤더는 제거한다")
-        void thenSpoofedHeadersShouldBeRemovedWhenUnauthenticated() {
-            // given
-            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test")
-                    .header("X-Authenticated-User", "spoofed-user")
-                    .header("X-Authenticated-Roles", "ADMINISTRATORS")
-                    .header("X-Authenticated-Auth-Type", "spoofed-auth")
-                    .build());
-            var chain = mock(WebFilterChain.class);
-            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
-            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
-
-            // when & then
-            StepVerifier.create(filter.filter(exchange, chain))
-                    .verifyComplete();
-
-            verify(chain).filter(exchangeCaptor.capture());
-            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
-            then(headers.getFirst("X-Authenticated-User")).isNull();
-            then(headers.getFirst("X-Authenticated-Roles")).isNull();
-            then(headers.getFirst("X-Authenticated-Auth-Type")).isNull();
-        }
-
-        @Test
-        @DisplayName("인증된 요청에는 게이트웨이가 정규화한 인증 헤더를 넣는다")
-        void thenGatewayShouldInjectNormalizedAuthenticationHeaders() {
-            // given
-            Map<String, Object> attributes = Map.of(
-                    "sub", "user123",
-                    "groups", List.of("administrators")
-            );
-            var context = givenSecurityContext(givenOAuth2Token(attributes, List.of()));
-            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test")
-                    .header("X-Authenticated-User", "spoofed-user")
-                    .header("X-Authenticated-Roles", "USERS")
-                    .header("X-Authenticated-Auth-Type", "spoofed-auth")
-                    .build());
-            var chain = mock(WebFilterChain.class);
-            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
-            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
-
-            // when & then
-            StepVerifier.create(
-                    filter.filter(exchange, chain)
-                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
-            ).verifyComplete();
-
-            verify(chain).filter(exchangeCaptor.capture());
-            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
-            then(headers.getFirst("X-Authenticated-User")).isEqualTo("user123");
-            then(headers.getFirst("X-Authenticated-Auth-Type")).isEqualTo("OAuth2AuthenticationToken");
-            then(headers.getFirst("X-Authenticated-Roles").split(","))
-                    .containsExactlyInAnyOrder("USERS", "ADMINISTRATORS");
-        }
-
-        @Test
-        @DisplayName("익명 인증에는 내부 인증 헤더를 넣지 않는다")
-        void thenAnonymousAuthenticationShouldNotInjectAuthenticationHeaders() {
-            // given
-            var context = givenSecurityContext(new AnonymousAuthenticationToken(
-                    "key",
-                    "anonymousUser",
-                    List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
-            ));
-            var exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/test").build());
-            var chain = mock(WebFilterChain.class);
-            var exchangeCaptor = ArgumentCaptor.forClass(ServerWebExchange.class);
-            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
-
-            // when & then
-            StepVerifier.create(
-                    filter.filter(exchange, chain)
-                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
-            ).verifyComplete();
-
-            verify(chain).filter(exchangeCaptor.capture());
-            var headers = exchangeCaptor.getValue().getRequest().getHeaders();
-            then(headers.getFirst("X-Authenticated-User")).isNull();
-            then(headers.getFirst("X-Authenticated-Roles")).isNull();
-            then(headers.getFirst("X-Authenticated-Auth-Type")).isNull();
-        }
-    }
-
     // ─── SecurityContext 처리 테스트 ──────────────────────────────────────────
 
     @Nested
@@ -313,6 +270,30 @@ class CustomAuthoritiesFilterTest {
             ).verifyComplete();
 
             verify(chain, times(1)).filter(any(ServerWebExchange.class));
+        }
+
+        @Test
+        @DisplayName("익명 인증은 변경하지 않고 원본 exchange로 체인을 진행한다")
+        void thenAnonymousAuthenticationShouldContinueWithOriginalExchange() {
+            // given
+            var authentication = new AnonymousAuthenticationToken(
+                    "key",
+                    "anonymousUser",
+                    List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+            );
+            var context = givenSecurityContext(authentication);
+            var exchange = givenExchange();
+            var chain = mock(WebFilterChain.class);
+            given(chain.filter(any(ServerWebExchange.class))).willReturn(Mono.empty());
+
+            // when & then
+            StepVerifier.create(
+                    filter.filter(exchange, chain)
+                            .contextWrite(ReactiveSecurityContextHolder.withSecurityContext(Mono.just(context)))
+            ).verifyComplete();
+
+            verify(chain).filter(same(exchange));
+            then(context.getAuthentication()).isSameAs(authentication);
         }
 
         @Test
