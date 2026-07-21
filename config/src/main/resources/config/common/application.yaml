@@ -15,7 +15,7 @@ eureka:
       management.port: ${management.server.port}
   client:
     service-url:
-      defaultZone: '{cipher}a891dcd1f6ebdc5060c90297d04af450c87fc4364e030e48fa1417e1f0b5e50d045680f95d49b4f54e7a6477afa4c66cdfba7b4370e9e93d4c6472561988e6b42ed7fdbcf4d8630c2a5f1ab4395f277a5d9aa456acaa58fdc385c1050f7724ef05de69a1b94e2bb52d9f1bbae2a1418bf95d779b61f1ae3b1293cc3edb35808a'
+      defaultZone: '{cipher}03514cd71ba8d49b353cdc127791adaec3604e83d69d1d22e8de5def04a9bb5345b8adc8b1a5ea3572d1323715cbb84a'
 
 management:
   server:
