@@ -14,7 +14,7 @@ spring:
   security:
     user:
       name: 'gateway-api'
-      password: '{cipher}fec9e711f06969cb0f07d0596be8301b0e08d90d7f69344ef31ec66a760baba03637db9952a32c307084fd4db371eafc760e9b105ddef78b7518c011edcc0b0472fbd8aaaa59f33a7412d994dd64314c'
+      password: '{bcrypt}$2a$12$PUI3k.kYEdMm/dIR5rYjAOVrLQK7BOpEbSgJmHHNJq8jDYI4RYuaW'
       roles:
         - 'ADMINISTRATORS'
     oauth2:
