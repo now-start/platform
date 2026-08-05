@@ -6,7 +6,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.12` |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.13` |
 | `eureka` | Eureka Server | `8761` | `2.4.9` |
 | `admin` | Spring Boot Admin Server | `9090` | `2.11.7` |
 | `gateway` | Spring Cloud Gateway | `8000` | `6.1.0` |
@@ -47,7 +47,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 ```bash
 cp .env.example .env
-# .env의 ENCRYPT_KEY, REDIS_HOST 및 필요한 Redis 인증 정보를 설정
+# .env의 ENCRYPT_KEY 설정
 docker compose up -d
 ```
 
@@ -55,7 +55,7 @@ Gateway Basic 비밀번호는 Config Server의 `{cipher}` 값으로 관리하며
 
 `config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888` 설정으로 Config Server를 참조합니다. 외부로 publish되는 포트는 `gateway`의 `8000`뿐이며, `config`, `eureka`, `admin`은 Docker 내부 네트워크에서만 접근합니다.
 
-Gateway의 WebFlux 세션은 Spring Session을 통해 Redis에 저장됩니다. 모든 Gateway 인스턴스는 같은 `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`를 사용해야 하며 host와 password는 필수입니다. 세션 만료 시간은 30분이며, Redis 키 namespace는 기본 `nowstart:gateway:session`입니다. 환경별로 분리해야 한다면 `GATEWAY_SESSION_NAMESPACE`를 변경합니다.
+Gateway의 WebFlux 세션은 Spring Session을 통해 Redis에 저장됩니다. Redis host와 password는 Config Server의 `gateway.yaml`에서 `{cipher}` 값으로 관리하며, port는 `6379`를 사용합니다. 모든 Gateway 인스턴스는 같은 Redis 설정을 사용해야 합니다. 세션 만료 시간은 30분이며, Redis 키 namespace는 `nowstart:gateway:session`입니다.
 
 현재 구성은 외부 standalone Redis를 사용하므로 `compose.yaml`에 Redis 서비스를 추가하지 않습니다. Redis는 Gateway 전용 계정/키 권한으로 접근 가능한 사설망에 배치해야 합니다. Redis가 중단되면 로그인과 기존 세션 사용도 영향을 받습니다. Redis 세션 통합 테스트는 Testcontainers를 사용하므로 테스트 실행 시 Docker가 필요합니다.
 
@@ -90,7 +90,7 @@ ghcr.io/now-start/gateway:{version}
 릴리스 이벤트는 `{module}-{version}` 태그 prefix로 모듈을 구분합니다.
 
 ```text
-config-2.1.12
+config-2.1.13
 eureka-2.4.9
 admin-2.11.7
 gateway-6.1.0

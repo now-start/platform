@@ -4,6 +4,9 @@ server:
 spring:
   data:
     redis:
+      host: '{cipher}a87354da06caf046c728c4251dbaf88c55ba02c52a92d0b37f57970a09c811be'
+      port: 6379
+      password: '{cipher}bb0e4195b105fddd1417b2a24637919ddf1c62c3debd206cbf2872d91b422787'
       connect-timeout: 2s
       timeout: 2s
   session:
