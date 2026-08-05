@@ -11,6 +11,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.server.WebSessionServerOAuth2AuthorizedClientRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.savedrequest.WebSessionServerRequestCache;
@@ -81,6 +83,11 @@ public class SecurityConfig {
                 .role(Role.ADMINISTRATORS.name())
                 .implies(Role.USERS.name())
                 .build();
+    }
+
+    @Bean
+    public ServerOAuth2AuthorizedClientRepository authorizedClientRepository() {
+        return new WebSessionServerOAuth2AuthorizedClientRepository();
     }
 
     private void authorizeExchange(ServerHttpSecurity.AuthorizeExchangeSpec exchanges) {

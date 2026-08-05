@@ -46,6 +46,10 @@ services:
       TZ: "Asia/Seoul"
       JAVA_TOOL_OPTIONS: "-XX:MaxDirectMemorySize=256m"
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config:8888"
+      SPRING_DATA_REDIS_HOST: "${REDIS_HOST:?REDIS_HOST is required}"
+      SPRING_DATA_REDIS_PORT: "${REDIS_PORT:-6379}"
+      SPRING_DATA_REDIS_PASSWORD: "${REDIS_PASSWORD:?REDIS_PASSWORD is required}"
+      SPRING_SESSION_DATA_REDIS_NAMESPACE: "${GATEWAY_SESSION_NAMESPACE:-nowstart:gateway:session}"
     depends_on:
       - config
       - eureka
