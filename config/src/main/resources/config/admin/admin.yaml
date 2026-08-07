@@ -5,7 +5,7 @@ spring:
   boot:
     admin:
       ui:
-        public-url: https://spring.nowstart.org:443/admin
+        public-url: https://spring.nowstart.org:443
         external-views:
           - label: "API 문서"
             order: 1000
