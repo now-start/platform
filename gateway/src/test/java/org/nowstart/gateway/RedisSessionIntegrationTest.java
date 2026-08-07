@@ -76,8 +76,8 @@ class RedisSessionIntegrationTest {
                     .expectStatus().isOk()
                     .expectBody()
                     .jsonPath("$._links.health").exists()
-                    .jsonPath("$._links.env").doesNotExist()
-                    .jsonPath("$._links.sessions").doesNotExist();
+                    .jsonPath("$._links.env").exists()
+                    .jsonPath("$._links.sessions").exists();
             clientB.get()
                     .uri("/admin/session-probe.json")
                     .accept(MediaType.APPLICATION_JSON)
@@ -114,18 +114,16 @@ class RedisSessionIntegrationTest {
         )
                 .profiles("test")
                 .web(WebApplicationType.REACTIVE)
-                .properties(
-                        "server.port=0",
-                        "spring.cloud.config.enabled=false",
-                        "spring.data.redis.host=" + REDIS.getHost(),
-                        "spring.data.redis.port=" + REDIS.getMappedPort(REDIS_PORT),
-                        "spring.session.data.redis.namespace=" + SESSION_NAMESPACE,
-                        "spring.session.timeout=5m",
-                        "management.endpoints.web.exposure.include=*",
-                        "management.endpoint.env.access=none",
-                        "management.endpoint.sessions.access=none"
-                )
-                .run();
+                .run(
+                        "--server.port=0",
+                        "--spring.cloud.config.enabled=false",
+                        "--spring.data.redis.host=" + REDIS.getHost(),
+                        "--spring.data.redis.port=" + REDIS.getMappedPort(REDIS_PORT),
+                        "--spring.data.redis.password=",
+                        "--spring.session.data.redis.namespace=" + SESSION_NAMESPACE,
+                        "--spring.session.timeout=5m",
+                        "--management.endpoints.web.exposure.include=*"
+                );
     }
 
     private WebTestClient webTestClient(ConfigurableApplicationContext context) {

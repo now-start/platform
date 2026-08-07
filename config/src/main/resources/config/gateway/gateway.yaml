@@ -9,12 +9,8 @@ spring:
   data:
     redis:
       host: '{cipher}a87354da06caf046c728c4251dbaf88c55ba02c52a92d0b37f57970a09c811be'
-      port: 6379
       password: '{cipher}bb0e4195b105fddd1417b2a24637919ddf1c62c3debd206cbf2872d91b422787'
-      connect-timeout: 2s
-      timeout: 2s
   session:
-    timeout: 30m
     data:
       redis:
         namespace: nowstart:gateway:session
@@ -43,10 +39,3 @@ spring:
         provider:
           nowstart:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
-
-management:
-  endpoint:
-    env:
-      access: none
-    sessions:
-      access: none
