@@ -1,6 +1,10 @@
 server:
   port: 8000
 
+eureka:
+  instance:
+    hostname: '${HOSTNAME}'
+
 spring:
   data:
     redis:
