@@ -40,6 +40,3 @@ spring:
         provider:
           nowstart:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
-logging:
-  level:
-    org.springframework.cloud.gateway.filter.headers.XForwardedHeadersFilter: TRACE
