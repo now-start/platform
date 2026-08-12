@@ -3,6 +3,10 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+    properties:
+      hibernate:
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
   datasource:
     url: '{cipher}a5a8114474e5fcd6a9f0ba8d6ca8a274026ffccca977e27808c3b7ac88ff96149a87008bfae0909d1bea323a08adb5292db5952b3077f0e7e91aed9389ce9bea47aae7f35d4abd5506aeffc6312db4d0'
     username: '{cipher}e76dd74451fcf3902439fc1e0c96ebbb3fc7efbcb5c37972f5db8a81d6ceb1be'
