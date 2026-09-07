@@ -12,6 +12,13 @@ spring:
     password: '{cipher}e401a93703428807bf17574cb15de2054850bd9669509f30c880f3d18ec71dc6c0b1cc7e0faa8faa84abc5307439c804'
 
 evergreen:
+  execution:
+    live-enabled: false
+    poll-seconds: 30
+    max-quote-age-seconds: 5
+    max-signal-age-seconds: 120
+    max-slippage: 0.003
+    max-drawdown: 0.10
   trading:
     base-url: '{cipher}1e7e704a7fc25257e4a0354975c6ee7418d9b9225a4fe0310ad7723cdeb3b4a0c1776324d82167a7ee17b1a1e5871c27'
     access-key: '{cipher}96520b0098482a3869f7752f074c8e8cbe20c058a597932679ee226317da9c3bdf71536d4255abb4f58d5f629da5a14045b9d52592d07710f6f364c685e55685'
