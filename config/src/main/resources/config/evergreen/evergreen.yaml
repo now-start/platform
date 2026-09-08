@@ -6,7 +6,7 @@ spring:
 
 evergreen:
   execution:
-    live-enabled: false
+    live-enabled: true
     poll-seconds: 30
     max-quote-age-seconds: 5
     max-signal-age-seconds: 120
