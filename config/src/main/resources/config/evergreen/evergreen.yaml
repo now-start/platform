@@ -6,12 +6,13 @@ spring:
 
 evergreen:
   execution:
+    strategy: breakout-buffer-early3-v1
     live-enabled: true
     poll-seconds: 30
     max-quote-age-seconds: 5
     max-signal-age-seconds: 120
     max-slippage: 0.003
-    max-drawdown: 0.10
+    max-drawdown: 0.20
   trading:
     access-key: '{cipher}96520b0098482a3869f7752f074c8e8cbe20c058a597932679ee226317da9c3bdf71536d4255abb4f58d5f629da5a14045b9d52592d07710f6f364c685e55685'
     secret-key: '{cipher}0ad9c8290af95dacadb3c21190035528d35a776b05aa20706f8181ffc61f5a27ab24de9be8eb52059bca81c99e3c080ff7c09a2dc98e61d024a455689be1c40a'
