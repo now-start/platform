@@ -17,28 +17,28 @@ permissions:
 
 jobs:
   config:
-    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: config
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   eureka:
-    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: eureka
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   admin:
-    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: admin
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   gateway:
-    uses: now-start/workflow/.github/workflows/reusable-java-app.yaml@main
+    uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: gateway
     secrets:
