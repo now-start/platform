@@ -101,7 +101,7 @@ class SecurityConfigTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"/actuator/env", "/nyang-nyang-bot/test"})
+    @ValueSource(strings = {"/actuator/env", "/nyang-nyang-bot/test", "/barosteel", "/barosteel/", "/barosteel/login", "/barosteel/admin/members"})
     @DisplayName("공개 경로는 인증 없이 통과한다")
     void publicPathShouldBePublic(String path) {
         webTestClient.get()
@@ -111,7 +111,7 @@ class SecurityConfigTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"/actuator/v3/api-docs", "/nyang-nyang-bot/v3/api-docs"})
+    @ValueSource(strings = {"/actuator/v3/api-docs", "/nyang-nyang-bot/v3/api-docs", "/barosteel/v3/api-docs"})
     @DisplayName("공개 경로와 겹치는 구체적인 USERS 경로는 인증이 필요하다")
     void specificUsersPathShouldTakePrecedenceOverPublicPath(String path) {
         webTestClient.get()
@@ -224,6 +224,12 @@ class SecurityConfigTest {
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/barosteel-other", "/barosteel-other/login", "/barosteeladmin"})
+    @DisplayName("바로스틸과 접두어만 같은 경로는 공개하지 않는다")
+    void similarBarosteelPrefixShouldRemainProtected(String path) {
+        webTestClient.get().uri(path).exchange().expectStatus().isUnauthorized();
+    }
     private WebTestClient usersWebTestClient() {
         return webTestClient.mutateWith(SecurityMockServerConfigurers.mockOAuth2Login()
                 .authorities(new SimpleGrantedAuthority("ROLE_USERS")));

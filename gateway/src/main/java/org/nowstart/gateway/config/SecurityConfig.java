@@ -33,7 +33,9 @@ public class SecurityConfig {
     };
     private static final String[] PUBLIC_PATHS = {
             "/actuator/**",
-            "/nyang-nyang-bot/**"
+            "/nyang-nyang-bot/**",
+            "/barosteel",
+            "/barosteel/**"
     };
     private static final String[] USER_PATHS = {
             "/admin",
