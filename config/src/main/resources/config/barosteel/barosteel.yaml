@@ -1,0 +1,26 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        type.preferred_instant_jdbc_type: TIMESTAMP
+  flyway:
+    enabled: true
+  datasource:
+    url: '{cipher}c8432d9a999892ce0d91cf980a5549f4f206050d1a7ac96a340584f909fc8b7257f1c62aa6415747e17729179f6f9c2830a39996eca657b9df6015ab8a64f0ff'
+    username: '{cipher}84501d84cc6b69d45ddc217adc56e1f5f481aa91709c659fb9e5280a561c0ec1'
+    password: '{cipher}5fe349811b6fb1fc4f939a997d90ca74b3ec22e7f41c3336ad7686fa28f1209a998b30e87e572703a05947b75d74ac7d'
+    driver-class-name: org.mariadb.jdbc.Driver
+
+server:
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: BAROSTEEL_SESSION
+        http-only: true
+        same-site: lax
+        secure: true
