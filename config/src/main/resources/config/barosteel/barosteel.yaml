@@ -24,3 +24,6 @@ server:
         http-only: true
         same-site: lax
         secure: true
+
+barosteel:
+  public-url: https://spring.nowstart.org/barosteel
