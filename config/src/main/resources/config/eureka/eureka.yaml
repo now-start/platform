@@ -1,2 +1,12 @@
 server:
   port: 8761
+
+eureka:
+  swarm:
+    enabled: true
+    service: tasks.platform_eureka
+  client:
+    eureka-service-url-poll-interval-seconds: 10
+    registry-fetch-interval-seconds: 10
+  server:
+    peer-eureka-nodes-update-interval-ms: 10000

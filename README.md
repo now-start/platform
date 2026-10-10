@@ -7,7 +7,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
 | `config` | Spring Cloud Config Server | `8888` | `2.1.17` |
-| `eureka` | Eureka Server | `8761` | `2.4.11` |
+| `eureka` | Eureka Server | `8761` | `2.5.0` |
 | `admin` | Spring Boot Admin Server | `9090` | `2.11.9` |
 | `gateway` | Spring Cloud Gateway | `8000` | `6.1.3` |
 
@@ -95,3 +95,30 @@ eureka-2.4.11
 admin-2.11.9
 gateway-6.1.3
 ```
+
+## Eureka Swarm peer discovery
+
+`config/src/main/resources/config/eureka/eureka.yaml` enables Swarm discovery and
+sets the task DNS name and refresh intervals. GitOps only selects the image and
+global scheduling; no Eureka-specific environment variables are required.
+
+The resolver queries Docker DNS A records directly without the JVM address cache,
+excludes all local interface addresses, and keeps the last successful peer list
+during DNS failures. A successful answer containing only this task clears the
+peer list. Discovery is off unless `eureka.swarm.enabled=true`; when using this
+Config Server outside Swarm, override it to `false` in the local configuration.
+
+Both replication and Eureka's existing bootstrap registry fetch use direct task
+URLs. A singleton uses loopback for the client and has no replication peers.
+The existing Eureka bootstrap retry and heartbeat recovery mechanisms remain in
+use; DNS membership is not a readiness or complete-registry guarantee. Runtime
+DNS requires the JDK's `jdk.naming.dns` module (included in the normal JRE).
+
+Clients continue using `http://eureka:8761/eureka/` on the shared overlay. No node
+IP list, host port, additional dependency, or image health-checker is required.
+Publish the new Eureka image and Config Server settings before deploying its
+GitOps tag and global mode. Config Server reads these settings from this Git
+repository, so this configuration-only change does not require a new Config image.
+
+Run `./gradlew :eureka:test` and validate node join, removal, task IP replacement,
+and registry replication on a real Swarm before relying on this for availability.
