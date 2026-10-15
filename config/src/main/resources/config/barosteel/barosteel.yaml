@@ -27,3 +27,5 @@ server:
 
 barosteel:
   public-url: https://spring.nowstart.org/barosteel
+  session:
+    shared: true
