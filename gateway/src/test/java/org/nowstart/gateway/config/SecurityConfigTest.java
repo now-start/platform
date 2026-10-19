@@ -161,11 +161,28 @@ class SecurityConfigTest {
     @Test
     @DisplayName("내장 Basic 인증 비밀번호가 틀리면 401을 반환한다")
     void invalidBasicAuthenticationShouldReturnUnauthorized() {
+        java.time.Instant before = java.time.Instant.now();
         webTestClient.get()
                 .uri("/config/other")
                 .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, "wrong-secret"))
                 .exchange()
                 .expectStatus().isUnauthorized();
+        then(context.getBean(AuditEventRepository.class).find("anonymousUser", before, "AUTHENTICATION_FAILURE"))
+                .hasSize(1);
+    }
+
+    @Test
+    void recordsAuthenticationAndAuthorizationWithoutCredentials() {
+        java.time.Instant before = java.time.Instant.now();
+        webTestClient.get().uri("/config/other")
+                .headers(headers -> headers.setBasicAuth(BASIC_ADMIN_USERNAME, BASIC_ADMIN_PASSWORD))
+                .exchange().expectStatus().isNotFound();
+        var repository = context.getBean(AuditEventRepository.class);
+        then(repository.find(BASIC_ADMIN_USERNAME, before, "AUTHENTICATION_SUCCESS")).hasSize(1);
+        usersWebTestClient().get().uri("/config/other").exchange().expectStatus().isForbidden();
+        var denied = repository.find(null, before, "AUTHORIZATION_FAILURE");
+        then(denied).hasSize(1);
+        then(denied.getFirst().getData().toString()).doesNotContain(BASIC_ADMIN_PASSWORD, "Authorization");
     }
 
     @Test

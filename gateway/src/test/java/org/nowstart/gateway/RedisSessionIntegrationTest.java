@@ -9,6 +9,8 @@ import java.util.Objects;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -93,6 +95,14 @@ class RedisSessionIntegrationTest {
             String sessionId = Objects.requireNonNull(
                     loginResult.getResponseCookies().getFirst("SESSION")
             ).getValue();
+
+            gatewayA.getBean(AuditEventRepository.class).add(new AuditEvent(PRINCIPAL_NAME, "AUTHENTICATION_SUCCESS",
+                    Map.of("details", Map.of("remoteAddress", "127.0.0.1", "sessionId", sessionId))));
+            clientB.get().uri("/actuator/auditevents?principal=" + PRINCIPAL_NAME)
+                    .exchange().expectStatus().isOk().expectBody()
+                    .jsonPath("$.events[0].principal").isEqualTo(PRINCIPAL_NAME)
+                    .jsonPath("$.events[0].data.details.remoteAddress").isEqualTo("127.0.0.1")
+                    .jsonPath("$.events[0].data.details.sessionId").isEqualTo(sessionId);
 
             clientB.get()
                     .uri("/admin/session-probe.json")
