@@ -58,6 +58,13 @@ subprojects {
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
     }
 
+    tasks.named('bootBuildImage') {
+        buildpacks = ['urn:cnb:builder:paketo-buildpacks/java', 'docker.io/paketobuildpacks/health-checker:latest']
+        environment.put('BP_HEALTH_CHECKER_ENABLED', 'true')
+        environment.put('BPE_DEFAULT_THC_PORT', '8081')
+        environment.put('BPE_DEFAULT_THC_PATH', '/actuator/health/liveness')
+    }
+
     tasks.named('test') {
         useJUnitPlatform()
     }
