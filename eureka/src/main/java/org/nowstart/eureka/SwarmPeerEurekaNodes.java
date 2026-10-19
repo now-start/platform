@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.netflix.appinfo.ApplicationInfoManager;
+import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.EurekaClientConfig;
 import com.netflix.eureka.EurekaServerConfig;
 import com.netflix.eureka.cluster.PeerEurekaNode;
@@ -30,6 +31,12 @@ final class SwarmPeerEurekaNodes extends PeerEurekaNodes {
     @Override
     protected List<String> resolvePeerUrls() {
         return resolver.resolve();
+    }
+
+    @Override
+    public boolean isInstanceURL(String url, InstanceInfo instance) {
+        String host = hostFromUrl(url);
+        return host != null && host.equals(instance.getIPAddr()) || super.isInstanceURL(url, instance);
     }
 
     @Override

@@ -7,7 +7,7 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
 | `config` | Spring Cloud Config Server | `8888` | `2.1.17` |
-| `eureka` | Eureka Server | `8761` | `2.5.0` |
+| `eureka` | Eureka Server | `8761` | `2.5.1` |
 | `admin` | Spring Boot Admin Server | `9090` | `2.11.9` |
 | `gateway` | Spring Cloud Gateway | `8000` | `6.1.3` |
 
