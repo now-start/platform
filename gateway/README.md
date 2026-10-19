@@ -31,3 +31,14 @@ TTL은 장기 영속화나 메모리 상한을 보장하지 않으므로 세션�
 단위·보안 테스트는 인증 성공·실패·접근 거부, 저장 필드 제한, 조회 필터, 30일 TTL 인수, 기존 세션 ID 및 저장 실패 처리를 검증한다.
 `RedisAuditIntegrationTest`는 Docker Redis로 Lua 실행, 저장소 간 공유, 실제 TTL 및 색인 정리를 검증하며 Docker가 없으면 건너뛴다.
 기존 `RedisSessionIntegrationTest`는 두 Gateway 간 세션 공유를 검증하며 Docker가 필요하다.
+
+## 실제 접속 IP 전달
+
+`forwarded.enabled=false`로 `Forwarded` 헤더를 제거하고, `x-forwarded.for-enabled=false`로
+신뢰 프록시에서 받은 `X-Forwarded-For`를 재작성하지 않는다. Gateway 5.0.3이 공인 접속 IP까지
+`trusted-proxies`로 걸러내는 동작을 피하며, 하위 서비스의 `framework` 설정은 원래 IP를 읽는다.
+`x-forwarded.port-enabled=false`로 내부 HTTP 포트가 외부 HTTPS URL에 섞이지 않게 한다.
+`X-Forwarded-Proto`와 경로 접두사 처리는 유지한다. 앞단 프록시는 외부 입력 전달 헤더를 정리하고
+접속 IP를 설정해야 하며, Gateway 공개 포트는 신뢰 프록시에서만 접근 가능해야 한다.
+Swarm ingress 주소만으로 외부 호출자를 구분할 수는 없다.
+관련 작업: [barosteel #69](https://github.com/now-start/barosteel/issues/69).
