@@ -15,9 +15,11 @@ public class HazelcastConfig {
     @Bean
     public Config adminHazelcastConfig(
             @Value("${spring.application.name}") String applicationName,
-            @Value("${admin.cluster.members:tasks.${spring.application.name}}") List<String> members) {
+            @Value("${admin.cluster.members:tasks.${spring.application.name}}") List<String> members,
+            @Value("${admin.cluster.interfaces:127.0.0.1}") List<String> interfaces) {
         Config config = new Config();
         config.setClusterName(applicationName);
+        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(interfaces);
         var join = config.getNetworkConfig().getJoin();
         join.getAutoDetectionConfig().setEnabled(false);
         join.getMulticastConfig().setEnabled(false);

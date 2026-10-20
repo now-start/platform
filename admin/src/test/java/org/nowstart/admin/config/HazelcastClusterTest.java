@@ -51,11 +51,10 @@ class HazelcastClusterTest {
 
     private Config config(String cluster, int port) throws Exception {
         Config config = new HazelcastConfig().adminHazelcastConfig(cluster,
-                List.of("127.0.0.1"));
+                List.of("127.0.0.1"), List.of("127.0.0.*"));
         config.getNetworkConfig().getJoin().getTcpIpConfig()
                 .setMembers(List.of("localhost:15701"));
         config.getNetworkConfig().setPort(port);
-        config.setProperty("hazelcast.local.localAddress", "127.0.0.1");
         config.setProperty("hazelcast.operation.thread.count", "2");
         config.setProperty("hazelcast.operation.generic.thread.count", "2");
         config.setProperty("hazelcast.io.input.thread.count", "1");
