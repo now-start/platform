@@ -51,7 +51,7 @@ class HazelcastClusterTest {
 
     private Config config(String cluster, int port) throws Exception {
         Config config = new HazelcastConfig().adminHazelcastConfig(cluster,
-                List.of("127.0.0.1"), List.of("127.0.0.*"));
+                List.of("localhost"));
         config.getNetworkConfig().getJoin().getTcpIpConfig()
                 .setMembers(List.of("localhost:15701"));
         config.getNetworkConfig().setPort(port);
