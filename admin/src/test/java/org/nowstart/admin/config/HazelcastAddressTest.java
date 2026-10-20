@@ -2,7 +2,6 @@ package org.nowstart.admin.config;
 
 import java.net.InetAddress;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,29 +9,68 @@ import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 
 class HazelcastAddressTest {
     @Test
-    void selectsLocalTaskAddressInsteadOfBridgeOrRemoteTaskWithoutFixedSubnet() throws Exception {
-        var bridge = InetAddress.getByName("172.18.0.11");
-        var remoteTask = InetAddress.getByName("192.168.50.8");
-        var localTask = InetAddress.getByName("192.168.50.7");
-        assertThat(HazelcastConfig.selectLocalAddress(List.of(remoteTask, localTask), Set.of(bridge, localTask)))
+    void prefersExactLocalTaskAddressOverSubnetCandidates() throws Exception {
+        assertThat(HazelcastConfig.selectLocalAddress(
+                List.of(ip("192.168.50.8"), ip("192.168.50.7")),
+                List.of(local("172.18.0.11", 16), local("192.168.50.7", 24), local("192.168.50.9", 24))))
                 .isEqualTo("192.168.50.7");
     }
 
     @Test
-    void failsInsteadOfAdvertisingAnUnrelatedLocalAddress() throws Exception {
-        var remoteTask = InetAddress.getByName("192.168.50.8");
-        var bridge = InetAddress.getByName("172.18.0.11");
-        assertThatIllegalStateException()
-                .isThrownBy(() -> HazelcastConfig.selectLocalAddress(List.of(remoteTask), Set.of(bridge)))
-                .withMessageContaining("No local IPv4 address");
+    void selectsLocalSubnetWhenDnsDoesNotContainSelf() throws Exception {
+        assertThat(HazelcastConfig.selectLocalAddress(
+                List.of(ip("192.168.50.8"), ip("192.168.50.9")),
+                List.of(local("172.18.0.11", 16), local("192.168.50.7", 24))))
+                .isEqualTo("192.168.50.7");
     }
 
     @Test
-    void selectsIpv4WhenDnsAlsoReturnsIpv6() throws Exception {
-        var ipv6 = InetAddress.getByName("::1");
-        var ipv4 = InetAddress.getByName("127.0.0.1");
-        assertThat(HazelcastConfig.selectLocalAddress(List.of(ipv6, ipv4), Set.of(ipv6, ipv4)))
+    void usesActualPrefixIncludingPartialBytes() throws Exception {
+        assertThat(HazelcastConfig.selectLocalAddress(List.of(ip("192.168.50.200")),
+                List.of(local("192.168.50.7", 25), local("192.168.50.130", 25))))
+                .isEqualTo("192.168.50.130");
+    }
+
+    @Test
+    void failsInsteadOfAdvertisingAnUnrelatedLocalAddress() throws Exception {
+        assertThatIllegalStateException().isThrownBy(() -> HazelcastConfig.selectLocalAddress(
+                List.of(ip("192.168.50.8")), List.of(local("172.18.0.11", 16))))
+                .withMessageContaining("No local IPv4 address")
+                .withMessageContaining("192.168.50.8", "172.18.0.11/16");
+    }
+
+    @Test
+    void rejectsAmbiguousSubnets() throws Exception {
+        assertThatIllegalStateException().isThrownBy(() -> HazelcastConfig.selectLocalAddress(
+                List.of(ip("192.168.50.8"), ip("192.168.60.8")),
+                List.of(local("192.168.50.7", 24), local("192.168.60.7", 24))))
+                .withMessageContaining("Multiple local IPv4 addresses");
+    }
+
+    @Test
+    void rejectsMultipleExactMatches() throws Exception {
+        assertThatIllegalStateException().isThrownBy(() -> HazelcastConfig.selectLocalAddress(
+                List.of(ip("192.168.50.7"), ip("192.168.60.7")),
+                List.of(local("192.168.50.7", 24), local("192.168.60.7", 24))))
+                .withMessageContaining("Multiple local IPv4 addresses");
+    }
+
+    @Test
+    void ignoresIpv6AndDuplicateDnsEntries() throws Exception {
+        assertThat(HazelcastConfig.selectLocalAddress(
+                List.of(ip("::1"), ip("127.0.0.1"), ip("127.0.0.1")),
+                List.of(local("::1", 128), local("127.0.0.1", 8))))
                 .isEqualTo("127.0.0.1");
+    }
+
+    @Test
+    void rejectsEmptyDnsAndInvalidSubnetPrefixes() throws Exception {
+        assertThatIllegalStateException().isThrownBy(() -> HazelcastConfig.selectLocalAddress(
+                List.of(), List.of(local("192.168.50.7", 24))));
+        for (int prefix : List.of(-1, 0, 33)) {
+            assertThatIllegalStateException().isThrownBy(() -> HazelcastConfig.selectLocalAddress(
+                    List.of(ip("192.168.50.8")), List.of(local("192.168.50.7", prefix))));
+        }
     }
 
     @Test
@@ -41,5 +79,13 @@ class HazelcastAddressTest {
         assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1");
         assertThat(config.getNetworkConfig().getInterfaces().isEnabled()).isFalse();
         assertThat(config.getNetworkConfig().getJoin().getTcpIpConfig().getMembers()).containsExactly("localhost");
+    }
+
+    private static InetAddress ip(String address) throws Exception {
+        return InetAddress.getByName(address);
+    }
+
+    private static HazelcastConfig.LocalAddress local(String address, int prefix) throws Exception {
+        return new HazelcastConfig.LocalAddress(ip(address), prefix);
     }
 }
