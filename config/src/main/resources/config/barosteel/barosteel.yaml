@@ -38,3 +38,5 @@ barosteel:
   public-url: https://spring.nowstart.org/barosteel
   session:
     shared: true
+  cluster:
+    members: tasks.barosteel
