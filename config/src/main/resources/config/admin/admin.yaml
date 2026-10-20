@@ -17,7 +17,3 @@ spring:
               - label: "Grafana"
                 url: "https://grafana.nowstart.org"
                 iframe: true
-
-admin:
-  cluster:
-    interfaces: 10.0.*.*
