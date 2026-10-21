@@ -21,12 +21,14 @@ public class HazelcastConfig {
     @Bean
     public Config adminHazelcastConfig(
             @Value("${spring.application.name}") String applicationName,
-            @Value("${admin.cluster.members:tasks.${spring.application.name}}") List<String> members)
+            @Value("${admin.cluster.members:tasks.${spring.application.name}}") List<String> members,
+            @Value("${admin.cluster.bind-host:}") String bindHost)
             throws SocketException, UnknownHostException {
         Config config = new Config();
         config.setClusterName(applicationName);
         var discoveredAddresses = new ArrayList<InetAddress>();
-        for (String member : members) {
+        // Resolve the bind network independently of peers, which may not be healthy yet.
+        for (String member : bindHost.isBlank() ? members : List.of(bindHost)) {
             discoveredAddresses.addAll(List.of(InetAddress.getAllByName(member)));
         }
         List<LocalAddress> localAddresses;

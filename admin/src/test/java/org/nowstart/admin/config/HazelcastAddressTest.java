@@ -75,12 +75,20 @@ class HazelcastAddressTest {
 
     @Test
     void resolvesLocalHostnameWithoutFilteringRemoteDiscoveryCandidates() throws Exception {
-        var config = new HazelcastConfig().adminHazelcastConfig("admin-test", List.of("localhost"));
+        var config = new HazelcastConfig().adminHazelcastConfig("admin-test", List.of("localhost"), "");
         assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1");
         assertThat(config.getNetworkConfig().getInterfaces().isEnabled()).isFalse();
         assertThat(config.getNetworkConfig().getJoin().getTcpIpConfig().getMembers()).containsExactly("localhost");
     }
 
+    @Test
+    void startsWithoutPeerDnsWhenBindHostIsConfigured() throws Exception {
+        var config = new HazelcastConfig().adminHazelcastConfig(
+                "admin-test", List.of("unavailable-admin.invalid"), "localhost");
+        assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1");
+        assertThat(config.getNetworkConfig().getJoin().getTcpIpConfig().getMembers())
+                .containsExactly("unavailable-admin.invalid");
+    }
     private static InetAddress ip(String address) throws Exception {
         return InetAddress.getByName(address);
     }

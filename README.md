@@ -122,3 +122,7 @@ repository, so this configuration-only change does not require a new Config imag
 
 Run `./gradlew :eureka:test` and validate node join, removal, task IP replacement,
 and registry replication on a real Swarm before relying on this for availability.
+
+### Admin Swarm bootstrap
+
+`admin.cluster.bind-host` selects the local IPv4 interface using a stable DNS name on the cluster network. In GitOps, use `platform_config.platform_default`; Config Server must already be available for the application configuration import. `admin.cluster.members` remains the peer discovery list (`tasks.platform_admin.platform_default`). Separating these avoids requiring healthy admin task DNS before the first admin instance can start. Outside Swarm, leaving `bind-host` empty preserves address selection from the member list.
