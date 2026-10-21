@@ -39,4 +39,13 @@ barosteel:
   session:
     shared: true
   cluster:
-    members: tasks.barosteel
+    members: tasks.barosteel_barosteel.barosteel_default
+
+app:
+  cluster:
+    name: barosteel
+    members: tasks.barosteel_barosteel.barosteel_default
+    network-cidr: 10.0.3.0/24
+  cache:
+    ttl: 300s
+    max-entries-per-member: 10000

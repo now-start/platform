@@ -3,12 +3,10 @@ package org.nowstart.admin.config;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.config.MapConfig;
+import com.hazelcast.config.MergePolicyConfig;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,75 +18,54 @@ import static de.codecentric.boot.admin.server.config.AdminServerHazelcastAutoCo
 public class HazelcastConfig {
     @Bean
     public Config adminHazelcastConfig(
-            @Value("${spring.application.name}") String applicationName,
-            @Value("${admin.cluster.members:tasks.${spring.application.name}}") List<String> members,
-            @Value("${admin.cluster.bind-host:}") String bindHost)
-            throws SocketException, UnknownHostException {
+            @Value("${app.cluster.name:${spring.application.name}}") String name,
+            @Value("${app.cluster.members}") List<String> members,
+            @Value("${app.cluster.network-cidr}") String networkCidr,
+            @Value("${app.cluster.port:5701}") int port) throws Exception {
         Config config = new Config();
-        config.setClusterName(applicationName);
-        var discoveredAddresses = new ArrayList<InetAddress>();
-        // Resolve the bind network independently of peers, which may not be healthy yet.
-        for (String member : bindHost.isBlank() ? members : List.of(bindHost)) {
-            discoveredAddresses.addAll(List.of(InetAddress.getAllByName(member)));
-        }
-        List<LocalAddress> localAddresses;
+        config.setClusterName(name);
         try (var interfaces = NetworkInterface.networkInterfaces()) {
-            localAddresses = interfaces.flatMap(network -> network.getInterfaceAddresses().stream())
-                    .map(address -> new LocalAddress(address.getAddress(), address.getNetworkPrefixLength()))
-                    .toList();
+            var addresses = interfaces.flatMap(NetworkInterface::inetAddresses).toList();
+            config.setProperty("hazelcast.local.localAddress", selectLocalAddress(networkCidr, addresses));
         }
-        // interfaces 설정은 원격 DNS 후보도 제한하므로 로컬 주소 선택에만 적용한다.
-        config.setProperty("hazelcast.local.localAddress", selectLocalAddress(discoveredAddresses, localAddresses));
-        var join = config.getNetworkConfig().getJoin();
+        config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL");
+        config.setProperty("hazelcast.graceful.shutdown.max.wait", "90");
+        var network = config.getNetworkConfig().setPort(port).setPortAutoIncrement(false);
+        var join = network.getJoin();
         join.getAutoDetectionConfig().setEnabled(false);
         join.getMulticastConfig().setEnabled(false);
         join.getTcpIpConfig().setEnabled(true).setMembers(members);
-        config.addMapConfig(new MapConfig(DEFAULT_NAME_EVENT_STORE_MAP)
-                .setInMemoryFormat(InMemoryFormat.OBJECT));
+        config.addMapConfig(sharedMap("default"));
+        config.addMapConfig(sharedMap(DEFAULT_NAME_EVENT_STORE_MAP).setInMemoryFormat(InMemoryFormat.OBJECT));
         return config;
     }
-    static String selectLocalAddress(List<InetAddress> discoveredAddresses, List<LocalAddress> localAddresses) {
-        var ipv4Addresses = localAddresses.stream()
-                .filter(local -> local.address() instanceof Inet4Address)
-                .toList();
-        var candidates = ipv4Addresses.stream()
-                .filter(local -> discoveredAddresses.contains(local.address()))
-                .map(LocalAddress::address).distinct().toList();
-        if (candidates.isEmpty()) {
-            candidates = ipv4Addresses.stream()
-                    .filter(local -> discoveredAddresses.stream().anyMatch(local::contains))
-                    .map(LocalAddress::address).distinct().toList();
-        }
-        if (candidates.size() != 1) {
-            throw new IllegalStateException((candidates.isEmpty()
-                    ? "No local IPv4 address matches" : "Multiple local IPv4 addresses match")
-                    + " admin.cluster.members DNS results; dns="
-                    + discoveredAddresses.stream().map(InetAddress::getHostAddress).toList()
-                    + ", local=" + localAddresses);
-        }
-        return candidates.getFirst().getHostAddress();
+
+    private static MapConfig sharedMap(String name) {
+        return new MapConfig(name).setBackupCount(1).setAsyncBackupCount(0)
+                .setMergePolicyConfig(new MergePolicyConfig("PutIfAbsentMergePolicy", 100));
     }
 
-    record LocalAddress(InetAddress address, int prefixLength) {
-        boolean contains(InetAddress peer) {
-            if (!(address instanceof Inet4Address) || !(peer instanceof Inet4Address)
-                    || prefixLength <= 0 || prefixLength > 32) {
-                return false;
-            }
-            byte[] localBytes = address.getAddress();
-            byte[] peerBytes = peer.getAddress();
-            for (int bit = 0; bit < prefixLength; bit++) {
-                int mask = 1 << (7 - bit % 8);
-                if ((localBytes[bit / 8] & mask) != (peerBytes[bit / 8] & mask)) {
-                    return false;
-                }
-            }
-            return true;
+    static String selectLocalAddress(String cidr, List<InetAddress> addresses) throws Exception {
+        String[] parts = cidr.split("/", -1);
+        if (parts.length != 2 || !parts[0].matches("[0-9.]+")) {
+            throw new IllegalArgumentException("Expected IPv4 CIDR: " + cidr);
         }
-
-        @Override
-        public String toString() {
-            return address.getHostAddress() + "/" + prefixLength;
+        InetAddress subnet = InetAddress.getByName(parts[0]);
+        int prefix = Integer.parseInt(parts[1]);
+        if (!(subnet instanceof Inet4Address) || prefix < 1 || prefix > 32) {
+            throw new IllegalArgumentException("Expected IPv4 CIDR: " + cidr);
         }
+        var candidates = addresses.stream().filter(address -> address instanceof Inet4Address)
+                .filter(address -> {
+                    for (int bit = 0; bit < prefix; bit++) {
+                        int mask = 1 << (7 - bit % 8);
+                        if ((address.getAddress()[bit / 8] & mask) != (subnet.getAddress()[bit / 8] & mask)) return false;
+                    }
+                    return true;
+                }).distinct().toList();
+        if (candidates.size() != 1) {
+            throw new IllegalStateException("Expected one local IPv4 in " + cidr + "; candidates=" + candidates);
+        }
+        return candidates.getFirst().getHostAddress();
     }
 }
