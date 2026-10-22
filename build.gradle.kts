@@ -32,7 +32,6 @@ subprojects {
             mavenBom("org.springdoc:springdoc-openapi-bom:3.1.1")
             mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.32.0")
         }
-        dependencies { dependency("com.hazelcast:hazelcast:5.7.0") }
     }
     dependencies {
         add("implementation", "org.jetbrains.kotlin:kotlin-reflect")

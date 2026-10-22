@@ -1,8 +1,5 @@
 version = "2.11.19"
 
-// Keep rolling deployments compatible with the existing Admin cluster.
-dependencyManagement { dependencies { dependency("com.hazelcast:hazelcast:5.5.0") } }
-
 dependencies {
     add("implementation", "org.springframework.boot:spring-boot-starter-hazelcast")
     add("implementation", "org.springframework.boot:spring-boot-starter-web")
