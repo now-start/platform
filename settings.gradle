@@ -1,6 +1,0 @@
-rootProject.name = 'platform'
-
-include 'config'
-include 'eureka'
-include 'admin'
-include 'gateway'

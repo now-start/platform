@@ -3,3 +3,37 @@ spring:
     name: gateway
   config:
     import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
+
+gateway:
+  rbac:
+    default-role: ADMINISTRATORS
+    groups-attribute: groups
+    group-roles:
+      users: USERS
+      administrators: ADMINISTRATORS
+    hierarchy:
+      ADMINISTRATORS:
+        - USERS
+    # 설정 순서와 관계없이 가장 구체적인 경로의 정책을 적용한다.
+    rules:
+      - paths:
+          - /oauth2/authorization/**
+          - /login/oauth2/code/**
+          - /actuator/**
+          - /nyang-nyang-bot/**
+          - /barosteel
+          - /barosteel/**
+        permit-all: true
+      - paths:
+          - /admin
+          - /admin/
+          - /admin/applications
+          - /admin/wallboard
+          - /admin/journal
+          - /admin/external
+          - /admin/assets/**
+          - /admin/*.*
+          - /admin/swagger-ui/**
+          - /*/v3/api-docs
+          - /admin/v3/api-docs/swagger-config
+        role: USERS

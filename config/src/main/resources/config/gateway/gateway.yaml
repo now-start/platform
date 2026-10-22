@@ -7,14 +7,8 @@ eureka:
     hostname: '${HOSTNAME}'
 
 spring:
-  data:
-    redis:
-      host: '{cipher}a87354da06caf046c728c4251dbaf88c55ba02c52a92d0b37f57970a09c811be'
-      password: '{cipher}bb0e4195b105fddd1417b2a24637919ddf1c62c3debd206cbf2872d91b422787'
   session:
-    data:
-      redis:
-        namespace: nowstart:gateway:session
+    timeout: 30m
   cloud:
     gateway:
       server:
@@ -45,3 +39,11 @@ spring:
         provider:
           nowstart:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
+
+# Gateway 멤버는 Spring Boot Admin과 분리된 자체 클러스터를 구성한다.
+gateway:
+  cluster:
+    name: gateway
+    members: tasks.platform_gateway.platform_default
+    interfaces: 10.0.11.*
+    port: 5701

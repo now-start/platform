@@ -35,3 +35,10 @@ spring:
 eureka:
   client:
     enabled: false
+
+gateway:
+  cluster:
+    name: gateway-test-${random.uuid}
+    port: 0
+    members: 127.0.0.1
+    interfaces: 127.0.0.1
