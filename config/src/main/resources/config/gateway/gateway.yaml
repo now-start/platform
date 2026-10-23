@@ -5,11 +5,16 @@ server:
 eureka:
   instance:
     hostname: '${HOSTNAME}'
+  client:
+    registry-fetch-interval-seconds: 5
 
 spring:
   session:
     timeout: 30m
   cloud:
+    loadbalancer:
+      cache:
+        enabled: false
     gateway:
       server:
         webflux:
