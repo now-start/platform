@@ -1,8 +1,4 @@
 spring:
-  cloud:
-    inetutils:
-      preferred-networks:
-        - '10\.0\.11\..*'
   servlet:
     multipart:
       max-file-size: 5MB
@@ -27,10 +23,6 @@ spring:
     username: '{cipher}84501d84cc6b69d45ddc217adc56e1f5f481aa91709c659fb9e5280a561c0ec1'
     password: '{cipher}5fe349811b6fb1fc4f939a997d90ca74b3ec22e7f41c3336ad7686fa28f1209a998b30e87e572703a05947b75d74ac7d'
     driver-class-name: org.mariadb.jdbc.Driver
-
-eureka:
-  instance:
-    prefer-ip-address: true
 
 server:
   servlet:
