@@ -63,6 +63,7 @@ class SwarmDiscoveryConfigurationTests {
             )
             .withPropertyValues(
                 "eureka.swarm.enabled=true",
+                "eureka.swarm.network-cidr=127.0.0.0/8",
                 "eureka.client.registry-fetch-interval-seconds=10",
             )
             .run(

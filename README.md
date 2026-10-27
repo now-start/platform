@@ -6,12 +6,14 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 | 모듈 | 역할 | 기본 포트 | 현재 버전 |
 | --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.17` |
-| `eureka` | Eureka Server | `8761` | `2.5.1` |
-| `admin` | Spring Boot Admin Server | `9090` | `2.11.9` |
-| `gateway` | Spring Cloud Gateway | `8000` | `6.1.3` |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.24` |
+| `eureka` | Eureka Server | `8761` | `2.5.5` |
+| `admin` | Spring Boot Admin Server | `9090` | `2.11.21` |
+| `gateway` | Spring Cloud Gateway | `8000` | `6.2.2` |
 
 ## 요구 사항
+
+Hazelcast와 Eureka 서버의 다중 네트워크 주소 선택은 [네트워크 설정](docs/network-address-selection.md)을 참고한다.
 
 - Java 25
 - Kotlin 2.4.21 (운영 코드·테스트 및 Gradle Kotlin DSL)

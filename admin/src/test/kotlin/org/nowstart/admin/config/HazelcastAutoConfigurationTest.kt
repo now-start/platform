@@ -19,6 +19,7 @@ import org.springframework.test.annotation.DirtiesContext
             "spring.application.name=admin-autoconfig-test",
             "app.cluster.members=127.0.0.1",
             "app.cluster.network-cidr=127.0.0.0/8",
+            "app.cluster.port=0",
             "spring.jmx.enabled=false",
             "management.server.port=0",
             "otel.sdk.disabled=true",

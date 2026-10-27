@@ -6,10 +6,11 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 ## 클러스터와 세션
 
 Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
-`app.cluster.name`, `members`, `interfaces`, `port`를 설정한다.
-운영 기본값은 `gateway`, `tasks.platform_gateway.platform_default`, `10.0.11.*`, `5701`이다.
-다른 네트워크에서는 실제 overlay 인터페이스와 task DNS에 맞춰 변경한다.
-로컬 기본값은 loopback이며, 여러 인스턴스는 같은 클러스터 이름과 서로 접근 가능한 멤버 주소를 사용한다.
+`app.cluster.name`, `members`, `network-cidr`, `port`를 설정한다.
+운영 기본값은 `gateway`, `tasks.platform_gateway.platform_default`, `10.0.11.0/24`, `5701`이다.
+CIDR에 속하는 로컬 IPv4 하나를 선택하며, 멤버 DNS가 비어 있어도 주소를 선택할 수 있다.
+일치하는 주소가 없거나 여러 개이면 기동 오류로 처리한다. GitOps subnet과 network-cidr를 일치시킨다.
+로컬에서는 network-cidr를 `127.0.0.0/8`로 지정하며, 여러 인스턴스는 같은 클러스터 이름과 서로 접근 가능한 멤버 주소를 사용한다.
 Hazelcast 포트는 클러스터 내부 통신용이며 외부에 공개하지 않는다.
 
 - 세션 맵: `nowstart:gateway:sessions`; 감사 맵: `nowstart:gateway:audit`.
@@ -109,4 +110,4 @@ Config Server의 `config/gateway/gateway.yaml`에서 `default-filters`에 `name:
 GET 요청만 전체 HTTP 5xx 응답, `IOException`, Gateway의 `TimeoutException`에 최대 3회 재시도한다(최초 요청 포함 최대 4회). HEAD·POST·PUT·PATCH·DELETE·OPTIONS는 재시도하지 않는다.
 재시도만으로 정상 인스턴스 선택이나 롤링 배포 무중단을 보장하지 않는다.
 
-클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. Gateway의 `interfaces`는 Hazelcast 인터페이스 패턴이며 다른 앱의 `network-cidr`와 의미가 다르다. 설정 키 변경은 Gateway 코드와 중앙 설정을 함께 반영해야 하며, 구버전 `gateway.cluster`를 읽는 이미지로 롤백할 때는 설정도 함께 복구한다.
+클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 로컬 주소 선택도 동일한 `network-cidr` 방식이며, 원격 멤버 주소를 제한하는 interfaces 필터는 사용하지 않는다. Gateway 코드와 중앙 설정을 함께 반영한다.

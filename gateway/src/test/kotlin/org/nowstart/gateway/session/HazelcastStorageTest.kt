@@ -29,10 +29,10 @@ class HazelcastStorageTest {
     fun start() {
         val config =
             HazelcastConfiguration()
-                .gatewayHazelcastConfig(
+                .hazelcastConfig(
                     "storage-" + UUID.randomUUID(),
                     listOf("127.0.0.1"),
-                    listOf("127.0.0.1"),
+                    "127.0.0.0/8",
                     0,
                 )
         member = Hazelcast.newHazelcastInstance(config)

@@ -8,7 +8,7 @@ class HazelcastAddressTest {
     @Test
     fun selectsOnlyTheConfiguredOverlayWithoutPeerDns() {
         assertThat(
-                HazelcastConfig.selectLocalAddress(
+                HazelcastConfiguration.selectLocalAddress(
                     "10.0.11.0/24",
                     listOf(
                         InetAddress.getByName("10.0.3.6"),
@@ -18,8 +18,8 @@ class HazelcastAddressTest {
             )
             .isEqualTo("10.0.11.184")
         val config =
-            HazelcastConfig()
-                .adminHazelcastConfig(
+            HazelcastConfiguration()
+                .hazelcastConfig(
                     "test",
                     listOf("tasks.unavailable.invalid"),
                     "127.0.0.0/8",
@@ -34,10 +34,10 @@ class HazelcastAddressTest {
         val addresses =
             listOf(InetAddress.getByName("10.0.11.2"), InetAddress.getByName("10.0.11.3"))
         assertThatIllegalStateException()
-            .isThrownBy({ HazelcastConfig.selectLocalAddress("10.0.11.0/24", addresses) })
+            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.11.0/24", addresses) })
         assertThatIllegalStateException()
-            .isThrownBy({ HazelcastConfig.selectLocalAddress("10.0.3.0/24", addresses) })
+            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.3.0/24", addresses) })
         assertThatIllegalArgumentException()
-            .isThrownBy({ HazelcastConfig.selectLocalAddress("10.0.0.0/33", addresses) })
+            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.0.0/33", addresses) })
     }
 }

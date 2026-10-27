@@ -13,9 +13,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration(proxyBeanMethods = false)
-class HazelcastConfig {
+class HazelcastConfiguration {
     @Bean
-    fun adminHazelcastConfig(
+    fun hazelcastConfig(
         @Value("\${app.cluster.name:\${spring.application.name}}") name: String,
         @Value("\${app.cluster.members}") members: List<String>,
         @Value("\${app.cluster.network-cidr}") networkCidr: String,
@@ -32,32 +32,39 @@ class HazelcastConfig {
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")
         val network = config.networkConfig.setPort(port).setPortAutoIncrement(false)
-        val join = network.join
-        join.autoDetectionConfig.setEnabled(false)
-        join.multicastConfig.setEnabled(false)
-        join.tcpIpConfig.setEnabled(true).setMembers(members)
-        config.addMapConfig(sharedMap("default"))
+        network.join.autoDetectionConfig.setEnabled(false)
+        network.join.multicastConfig.setEnabled(false)
+        network.join.tcpIpConfig.setEnabled(true).setMembers(members)
+        config.addMapConfig(createSharedMap("default"))
         config.addMapConfig(
-            sharedMap(DEFAULT_NAME_EVENT_STORE_MAP).setInMemoryFormat(InMemoryFormat.OBJECT),
+            createSharedMap(DEFAULT_NAME_EVENT_STORE_MAP).setInMemoryFormat(InMemoryFormat.OBJECT),
         )
         return config
     }
 
-    private fun sharedMap(name: String): MapConfig =
+    private fun createSharedMap(name: String): MapConfig =
         MapConfig(name)
             .setBackupCount(1)
             .setAsyncBackupCount(0)
-            .setMergePolicyConfig(MergePolicyConfig("PutIfAbsentMergePolicy", 100))
+            .setMergePolicyConfig(
+                MergePolicyConfig("com.hazelcast.spi.merge.PutIfAbsentMergePolicy", 100),
+            )
 
     companion object {
         fun selectLocalAddress(cidr: String, addresses: List<InetAddress>): String {
             val parts = cidr.split('/')
-            require(parts.size == 2 && parts[0].matches(Regex("[0-9.]+"))) {
+            require(parts.size == 2) { "Expected IPv4 CIDR: $cidr" }
+            val octets = parts[0].split('.').map { it.toIntOrNull() }
+            val prefix = parts[1].toIntOrNull()
+            require(
+                octets.size == 4 &&
+                    octets.all { it != null && it in 0..255 } &&
+                    prefix != null &&
+                    prefix in 1..32,
+            ) {
                 "Expected IPv4 CIDR: $cidr"
             }
-            val subnet = InetAddress.getByName(parts[0])
-            val prefix = parts[1].toInt()
-            require(subnet is Inet4Address && prefix in 1..32) { "Expected IPv4 CIDR: $cidr" }
+            val subnet = octets.map { it!!.toByte() }.toByteArray()
             val candidates =
                 addresses
                     .filterIsInstance<Inet4Address>()
@@ -65,14 +72,14 @@ class HazelcastConfig {
                         (0 until prefix).all { bit ->
                             val mask = 1 shl (7 - bit % 8)
                             (address.address[bit / 8].toInt() and mask) ==
-                                (subnet.address[bit / 8].toInt() and mask)
+                                (subnet[bit / 8].toInt() and mask)
                         }
                     }
                     .distinct()
             check(candidates.size == 1) {
                 "Expected one local IPv4 in $cidr; candidates=$candidates"
             }
-            return candidates.first().hostAddress
+            return candidates.single().hostAddress
         }
     }
 }

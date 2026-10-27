@@ -18,10 +18,13 @@ class HazelcastClusterTest {
     @Test
     fun sharesAdminEventsAndRetainsThemAfterMemberLoss() {
         val cluster: String = "admin-test-" + UUID.randomUUID()
-        val first: HazelcastInstance = Hazelcast.newHazelcastInstance(config(cluster, 15701))
+        val first: HazelcastInstance = Hazelcast.newHazelcastInstance(config(cluster, emptyList()))
         var second: HazelcastInstance? = null
         try {
-            second = Hazelcast.newHazelcastInstance(config(cluster, 15702))
+            second =
+                Hazelcast.newHazelcastInstance(
+                    config(cluster, listOf("127.0.0.1:${first.cluster.localMember.address.port}")),
+                )
             val survivor: HazelcastInstance = second
             await()
                 .atMost(Duration.ofSeconds(30))
@@ -61,17 +64,15 @@ class HazelcastClusterTest {
         }
     }
 
-    private fun config(cluster: String, port: Int): Config {
+    private fun config(cluster: String, members: List<String>): Config {
         val config: Config =
-            HazelcastConfig()
-                .adminHazelcastConfig(
+            HazelcastConfiguration()
+                .hazelcastConfig(
                     cluster,
-                    listOf("localhost"),
+                    members,
                     "127.0.0.0/8",
-                    port,
+                    0,
                 )
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(listOf("localhost:15701"))
-        config.getNetworkConfig().setPort(port)
         config.setProperty("hazelcast.operation.thread.count", "2")
         config.setProperty("hazelcast.operation.generic.thread.count", "2")
         config.setProperty("hazelcast.io.input.thread.count", "1")

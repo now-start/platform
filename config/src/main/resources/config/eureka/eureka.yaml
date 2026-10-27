@@ -4,7 +4,8 @@ server:
 eureka:
   swarm:
     enabled: true
-    service: tasks.platform_eureka
+    service: tasks.platform_eureka.platform_default
+    network-cidr: 10.0.11.0/24
   client:
     eureka-service-url-poll-interval-seconds: 10
     registry-fetch-interval-seconds: 10

@@ -50,5 +50,5 @@ app:
   cluster:
     name: gateway
     members: tasks.platform_gateway.platform_default
-    interfaces: 10.0.11.*
+    network-cidr: 10.0.11.0/24
     port: 5701

@@ -61,8 +61,9 @@ class SwarmBootstrapTests {
             return SwarmPeerResolver(
                 "tasks.eureka",
                 PEER.getAddress().getPort(),
-                { name -> setOf("10.0.0.1", "127.0.0.1") },
-                { setOf("10.0.0.1") },
+                "127.0.0.0/8",
+                { name -> setOf("127.0.0.2", "127.0.0.1") },
+                { setOf("127.0.0.2") },
             )
         }
     }

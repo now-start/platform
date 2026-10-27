@@ -41,4 +41,4 @@ app:
     name: gateway-test-${random.uuid}
     port: 0
     members: 127.0.0.1
-    interfaces: 127.0.0.1
+    network-cidr: 127.0.0.0/8
