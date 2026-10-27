@@ -1,10 +1,12 @@
 package org.nowstart.eureka
 
+import com.netflix.appinfo.ApplicationInfoManager
 import com.netflix.eureka.cluster.PeerEurekaNodes
 import com.netflix.eureka.registry.PeerAwareInstanceRegistry
 import com.sun.net.httpserver.HttpServer
 import java.io.IOException
 import java.net.InetSocketAddress
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -28,6 +30,10 @@ import org.springframework.context.annotation.Bean
             "spring.boot.admin.client.enabled=false",
             "otel.sdk.disabled=true",
             "eureka.swarm.enabled=true",
+            "eureka.instance.ip-address=10.0.10.104",
+            "eureka.instance.hostname=wrong-network-container",
+            "eureka.instance.prefer-ip-address=false",
+            "management.server.port=0",
             "eureka.client.register-with-eureka=false",
             "eureka.client.fetch-registry=true",
             "eureka.server.registry-sync-retries=1",
@@ -38,6 +44,21 @@ class SwarmBootstrapTests {
     @field:Autowired lateinit var registry: PeerAwareInstanceRegistry
 
     @field:Autowired lateinit var peers: PeerEurekaNodes
+
+    @field:Autowired lateinit var applicationInfoManager: ApplicationInfoManager
+
+    @Test
+    fun advertisesSelectedNetworkAfterBindingAndMatchesPeerIdentity() {
+        val info = applicationInfoManager.info
+        assertThat(info.ipAddr).isEqualTo("127.0.0.2")
+        assertThat(info.hostName).isEqualTo("127.0.0.2")
+        assertThat(URI(info.statusPageUrl).host).isEqualTo("127.0.0.2")
+        assertThat(URI(info.healthCheckUrl).host).isEqualTo("127.0.0.2")
+        assertThat(URI(info.homePageUrl).host).isEqualTo("127.0.0.2")
+        assertThat(peers.isInstanceURL("http://127.0.0.2:8761/eureka/", info)).isTrue()
+        assertThat(peers.isInstanceURL("http://10.0.10.104:8761/eureka/", info)).isFalse()
+        assertThat(peers.isThisMyUrl("http://127.0.0.2:8761/eureka/")).isTrue()
+    }
 
     @Test
     fun startsServerWithExistingRegistrationsFetchedFromDiscoveredPeer() {
@@ -63,7 +84,7 @@ class SwarmBootstrapTests {
                 PEER.getAddress().getPort(),
                 "127.0.0.0/8",
                 { name -> setOf("127.0.0.2", "127.0.0.1") },
-                { setOf("127.0.0.2") },
+                { setOf("10.0.10.104", "127.0.0.2") },
             )
         }
     }

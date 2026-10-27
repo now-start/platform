@@ -16,7 +16,7 @@ class SwarmPeerResolver(
     private val lookup: AddressLookup = AddressLookup(::lookupAddresses),
     private val localAddresses: LocalAddresses = LocalAddresses(::localAddresses),
 ) {
-    private val localAddress =
+    val localAddress =
         selectLocalAddress(
             networkCidr,
             localAddresses.get().map(InetAddress::getByName),

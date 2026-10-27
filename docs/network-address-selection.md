@@ -7,7 +7,7 @@ Docker API 접근이나 별도 공통 라이브러리는 추가하지 않는다.
 | --- | --- | --- |
 | Admin·Gateway Hazelcast | `app.cluster.network-cidr` | `10.0.11.0/24` |
 | Barosteel Hazelcast | `app.cluster.network-cidr` | `10.0.3.0/24` |
-| Eureka 서버 간 피어 연결 | `eureka.swarm.network-cidr` | `10.0.11.0/24` |
+| Eureka 서버 간 피어 연결·자기 등록 주소 | `eureka.swarm.network-cidr` | `10.0.11.0/24` |
 
 세 앱의 Hazelcast 설정은 `HazelcastConfiguration.hazelcastConfig`에서 구성한다.
 `app.cluster.name`은 `spring.application.name`을 기본값으로 사용한다.
@@ -23,6 +23,8 @@ Admin·Gateway는 GRACEFUL 종료 훅을 사용한다. Barosteel은 HTTP gracefu
 
 Eureka는 `tasks.platform_eureka.platform_default`로 피어를 찾고, 응답 중 지정 CIDR의 주소만 사용한다.
 선택한 자기 주소는 복제 대상에서 제외한다. 다른 네트워크의 주소는 피어에 추가하지 않는다.
+같은 주소를 Eureka 서버 자신의 `ipAddr`·`hostName` 및 상태·헬스체크 URL에도 적용한다.
+설정 바인딩 후 등록 정보 생성 전에 적용하여 자동 감지한 다른 네트워크 주소가 등록되지 않게 한다.
 DNS가 아직 없거나 해당 네트워크의 자기 주소가 응답에 없으면 이전 피어 목록을 유지한다.
 최초 기동은 피어 없이 시작하고 기존 loopback URL로 부트스트랩하므로 healthy 이후 DNS 등록을 기다리며 기동이 막히지 않는다.
 다른 애플리케이션의 Eureka 접속 URL·자기 주소 등록 설정은 변경하지 않는다.
