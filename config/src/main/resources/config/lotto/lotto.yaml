@@ -24,7 +24,6 @@ lotto:
   max-retries: 3
   retry-delay-ms: 300000
   max-concurrent-sessions: 3
-  trace-enabled: false
   user-task-timeout-ms: 1800000
   cron:
     check: 0 0 22 * * 6

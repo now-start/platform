@@ -67,7 +67,7 @@ Gateway Basic 비밀번호는 Config Server의 `{cipher}` 값으로 관리하며
 Gateway의 WebFlux 세션과 감사 기록은 Gateway 전용 임베디드 Hazelcast 클러스터로 공유합니다.
 세션 만료는 기본 30분, 감사 기록 TTL은 30일이며, 두 맵은 동기 백업 1개를 사용합니다.
 전체 Gateway 종료 시 데이터가 초기화됩니다. Redis에서 이관하지 않으므로 전환 시 재로그인이 필요합니다.
-Config Server의 `gateway.cluster.*`에 실제 task DNS와 네트워크 인터페이스를 설정합니다.
+Config Server의 `app.cluster.*`에 실제 task DNS와 네트워크 인터페이스를 설정합니다.
 세션·감사·URL별 RBAC 및 신뢰 프록시 IP 처리의 상세 설정은 [Gateway 문서](gateway/README.md)를 참고합니다.
 통합 테스트는 임베디드 Hazelcast를 사용하며 Docker가 필요하지 않습니다.
 
@@ -137,4 +137,4 @@ and registry replication on a real Swarm before relying on this for availability
 
 ### Admin Swarm bootstrap
 
-`admin.cluster.bind-host` selects the local IPv4 interface using a stable DNS name on the cluster network. In GitOps, use `platform_config.platform_default`; Config Server must already be available for the application configuration import. `admin.cluster.members` remains the peer discovery list (`tasks.platform_admin.platform_default`). Separating these avoids requiring healthy admin task DNS before the first admin instance can start. Outside Swarm, leaving `bind-host` empty preserves address selection from the member list.
+Admin은 `app.cluster.name`, `app.cluster.members`, `app.cluster.network-cidr`를 사용한다. 지정한 CIDR에 속한 로컬 IPv4를 선택하므로 동료 태스크 DNS가 아직 비어 있어도 시작할 수 있다. 구버전 `admin.cluster.*`와 DNS 기반 bind-host 설정은 제거했다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.

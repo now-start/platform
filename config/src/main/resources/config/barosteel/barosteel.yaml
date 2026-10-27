@@ -1,8 +1,4 @@
 spring:
-  cloud:
-    inetutils:
-      preferred-networks:
-        - '10\.0\.11\..*'
   servlet:
     multipart:
       max-file-size: 5MB
@@ -28,10 +24,6 @@ spring:
     password: '{cipher}5fe349811b6fb1fc4f939a997d90ca74b3ec22e7f41c3336ad7686fa28f1209a998b30e87e572703a05947b75d74ac7d'
     driver-class-name: org.mariadb.jdbc.Driver
 
-eureka:
-  instance:
-    prefer-ip-address: true
-
 server:
   servlet:
     session:
@@ -42,14 +34,11 @@ server:
         same-site: lax
         secure: true
 
-barosteel:
+app:
   public-url: https://spring.nowstart.org/barosteel
   session:
     shared: true
-  cluster:
-    members: tasks.barosteel_barosteel.barosteel_default
 
-app:
   cluster:
     name: barosteel
     members: tasks.barosteel_barosteel.barosteel_default

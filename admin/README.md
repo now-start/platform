@@ -8,4 +8,4 @@ TCP 포트는 5701로 고정하며 `app.cluster.port`로 로컬 다중 인스턴
 
 Swarm global 배치와 stop-first 순차 배포는 유지한다. 정상 종료의 Hazelcast 대기는 최대 90초, 컨테이너 종료 유예는 120초이다. liveness 성공은 클러스터 합류의 증거가 아니므로 실제 멤버 목록도 확인한다. 네트워크 subnet을 변경할 때는 Compose IPAM과 Config Server CIDR을 함께 갱신한다.
 
-배포 순서: Config Server가 Git 저장소의 새 app.cluster 설정을 제공하는지 먼저 확인한 뒤 Admin 2.11.17 이상을 배포한다. Config Server는 Git에서 설정을 읽으므로 설정 제공에 서버 이미지 재배포는 필요하지 않다. 이미지 갱신은 Renovate로 진행하며 기존 ADMIN_CLUSTER_* 환경변수는 제거한다. 구버전 롤링 배포·롤백용 admin.cluster 키는 중앙 설정에 남기며 구버전 지원 종료 후 제거한다. 클러스터 이름은 기존 admin을 유지하여 롤링 배포 중 기존 멤버와 합류할 수 있다.
+Config Server는 Git의 `app.cluster` 설정을 제공한다. 구버전 `admin.cluster.*` 설정은 지원하지 않으며, 롤백 대상도 `app.cluster`를 사용하는 Admin 2.11.17 이상으로 선택한다. 설정 제공에 Config Server 이미지 재배포는 필요하지 않다.

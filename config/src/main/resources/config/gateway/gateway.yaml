@@ -3,8 +3,6 @@ server:
   forward-headers-strategy: none
 
 eureka:
-  instance:
-    hostname: '${HOSTNAME}'
   client:
     registry-fetch-interval-seconds: 5
 
@@ -18,6 +16,14 @@ spring:
     gateway:
       server:
         webflux:
+          default-filters:
+            - name: Retry
+              args:
+                retries: 1
+                methods: GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS
+                series: ''
+                statuses: ''
+                exceptions: java.net.UnknownHostException,java.net.ConnectException
           trusted-proxies: '^(127\.|10\.|100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.).*'
           forwarded:
             enabled: false
@@ -46,7 +52,7 @@ spring:
             issuer-uri: '{cipher}663c74997e0a2c52f961f4ada4f52554aedd8e734421c448bf2d5fb3587300ddb4750effe55474dd29bb3e41c43684defe2b6991fcd5224d84a7239876573838'
 
 # Gateway 멤버는 Spring Boot Admin과 분리된 자체 클러스터를 구성한다.
-gateway:
+app:
   cluster:
     name: gateway
     members: tasks.platform_gateway.platform_default

@@ -23,8 +23,3 @@ app:
     name: admin
     members: tasks.platform_admin.platform_default
     network-cidr: 10.0.11.0/24
-
-admin:
-  cluster:
-    bind-host: platform_config.platform_default
-    members: tasks.platform_admin.platform_default

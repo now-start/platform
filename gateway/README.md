@@ -6,7 +6,7 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 ## 클러스터와 세션
 
 Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
-`gateway.cluster.name`, `members`, `interfaces`, `port`를 설정한다.
+`app.cluster.name`, `members`, `interfaces`, `port`를 설정한다.
 운영 기본값은 `gateway`, `tasks.platform_gateway.platform_default`, `10.0.11.*`, `5701`이다.
 다른 네트워크에서는 실제 overlay 인터페이스와 task DNS에 맞춰 변경한다.
 로컬 기본값은 loopback이며, 여러 인스턴스는 같은 클러스터 이름과 서로 접근 가능한 멤버 주소를 사용한다.
@@ -102,3 +102,13 @@ Spring 설정 우선순위에 따라 **리스트는 통째로 교체**된다. Co
 기본 목록에 추가되는 것이 아니므로 OAuth 로그인 경로를 포함해 필요한 규칙 전체를 작성한다.
 맵(`group-roles`, `hierarchy`)은 설정 소스 간 병합될 수 있으므로 기존 매핑 제거 시 원래 설정도 수정한다.
 기본 정책의 `/*/v3/api-docs`는 `/barosteel/**` 같은 포괄 경로보다 구체적이므로 USERS 권한을 요구한다.
+
+## 연결 전 실패 재시도
+
+Config Server의 `config/gateway/gateway.yaml`에서 기본 `Retry` 필터를 모든 라우트에 적용한다.
+DNS 조회 실패(`UnknownHostException`)와 연결 실패(`ConnectException`)만 최대 1회 재시도한다.
+HTTP 5xx, 응답 타임아웃, 전송 후 연결 끊김은 재시도 대상이 아니다. 조회뿐 아니라 POST·PUT·PATCH·DELETE도 연결 전 실패에만 같은 정책을 사용한다.
+
+빈 `series`·`statuses` 설정은 기본 5xx 재시도를 끄기 위해 필요하다. 요청 본문이 있는 경우 Gateway 기본 body caching으로 본문을 보존하므로 업로드의 메모리 사용량도 고려한다. 재시도할 서버가 없거나 두 번째 연결도 실패하면 오류를 반환하며, 이 설정만으로 롤링 배포 무중단을 보장하지 않는다. 커스텀 준비 상태 필터나 주기적 readiness 검사는 추가하지 않는다.
+
+클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. Gateway의 `interfaces`는 Hazelcast 인터페이스 패턴이며 다른 앱의 `network-cidr`와 의미가 다르다. 설정 키 변경은 Gateway 코드와 중앙 설정을 함께 반영해야 하며, 구버전 `gateway.cluster`를 읽는 이미지로 롤백할 때는 설정도 함께 복구한다.

@@ -161,10 +161,10 @@ class HazelcastSessionIntegrationTest {
             .run(
                 "--server.port=0",
                 "--spring.cloud.config.enabled=false",
-                "--gateway.cluster.name=" + clusterName,
-                "--gateway.cluster.members=" + members,
-                "--gateway.cluster.interfaces=127.0.0.1",
-                "--gateway.cluster.port=0",
+                "--app.cluster.name=" + clusterName,
+                "--app.cluster.members=" + members,
+                "--app.cluster.interfaces=127.0.0.1",
+                "--app.cluster.port=0",
                 "--spring.session.timeout=5m",
                 "--management.endpoints.web.exposure.include=*",
             )

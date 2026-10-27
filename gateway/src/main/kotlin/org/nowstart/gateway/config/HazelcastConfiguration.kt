@@ -19,10 +19,10 @@ import org.springframework.session.config.annotation.web.server.EnableSpringWebS
 class HazelcastConfiguration {
     @Bean
     fun gatewayHazelcastConfig(
-        @Value("\${gateway.cluster.name:gateway}") name: String,
-        @Value("\${gateway.cluster.members:127.0.0.1}") members: List<String>,
-        @Value("\${gateway.cluster.interfaces:127.0.0.1}") interfaces: List<String>,
-        @Value("\${gateway.cluster.port:5701}") port: Int,
+        @Value("\${app.cluster.name:gateway}") name: String,
+        @Value("\${app.cluster.members:127.0.0.1}") members: List<String>,
+        @Value("\${app.cluster.interfaces:127.0.0.1}") interfaces: List<String>,
+        @Value("\${app.cluster.port:5701}") port: Int,
     ): Config {
         val config = Config().setClusterName(name)
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")

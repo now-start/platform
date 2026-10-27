@@ -36,7 +36,7 @@ eureka:
   client:
     enabled: false
 
-gateway:
+app:
   cluster:
     name: gateway-test-${random.uuid}
     port: 0
