@@ -103,12 +103,10 @@ Spring 설정 우선순위에 따라 **리스트는 통째로 교체**된다. Co
 맵(`group-roles`, `hierarchy`)은 설정 소스 간 병합될 수 있으므로 기존 매핑 제거 시 원래 설정도 수정한다.
 기본 정책의 `/*/v3/api-docs`는 `/barosteel/**` 같은 포괄 경로보다 구체적이므로 USERS 권한을 요구한다.
 
-## 연결 전 실패 재시도
+## 기본 재시도
 
-Config Server의 `config/gateway/gateway.yaml`에서 기본 `Retry` 필터를 모든 라우트에 적용한다.
-DNS 조회 실패(`UnknownHostException`)와 연결 실패(`ConnectException`)만 최대 1회 재시도한다.
-HTTP 5xx, 응답 타임아웃, 전송 후 연결 끊김은 재시도 대상이 아니다. 조회뿐 아니라 POST·PUT·PATCH·DELETE도 연결 전 실패에만 같은 정책을 사용한다.
-
-빈 `series`·`statuses` 설정은 기본 5xx 재시도를 끄기 위해 필요하다. 요청 본문이 있는 경우 Gateway 기본 body caching으로 본문을 보존하므로 업로드의 메모리 사용량도 고려한다. 재시도할 서버가 없거나 두 번째 연결도 실패하면 오류를 반환하며, 이 설정만으로 롤링 배포 무중단을 보장하지 않는다. 커스텀 준비 상태 필터나 주기적 readiness 검사는 추가하지 않는다.
+Config Server의 `config/gateway/gateway.yaml`에서 `default-filters`에 `name: Retry`만 지정한다. 별도 인자나 커스텀 필터 없이 Spring Cloud Gateway 기본 정책을 사용한다.
+GET 요청만 전체 HTTP 5xx 응답, `IOException`, Gateway의 `TimeoutException`에 최대 3회 재시도한다(최초 요청 포함 최대 4회). HEAD·POST·PUT·PATCH·DELETE·OPTIONS는 재시도하지 않는다.
+재시도만으로 정상 인스턴스 선택이나 롤링 배포 무중단을 보장하지 않는다.
 
 클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. Gateway의 `interfaces`는 Hazelcast 인터페이스 패턴이며 다른 앱의 `network-cidr`와 의미가 다르다. 설정 키 변경은 Gateway 코드와 중앙 설정을 함께 반영해야 하며, 구버전 `gateway.cluster`를 읽는 이미지로 롤백할 때는 설정도 함께 복구한다.
