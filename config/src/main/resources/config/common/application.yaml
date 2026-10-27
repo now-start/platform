@@ -11,6 +11,8 @@ encrypt:
 
 eureka:
   instance:
+    hostname: '${HOSTNAME:${spring.cloud.client.hostname}}'
+    prefer-ip-address: false
     metadata-map:
       management.port: ${management.server.port}
   client:
