@@ -1,11 +1,9 @@
 package org.nowstart.admin.config
 
-import com.hazelcast.core.HazelcastInstance
 import de.codecentric.boot.admin.server.eventstore.HazelcastEventStore
 import de.codecentric.boot.admin.server.eventstore.InstanceEventStore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.nowstart.admin.monitoring.HazelcastClusterEndpoint
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.annotation.DirtiesContext
@@ -30,19 +28,6 @@ import org.springframework.test.annotation.DirtiesContext
 @DirtiesContext
 class HazelcastAutoConfigurationTest {
     @field:Autowired lateinit var eventStore: InstanceEventStore
-
-    @field:Autowired lateinit var hazelcast: HazelcastInstance
-    @field:Autowired lateinit var endpoint: HazelcastClusterEndpoint
-
-    @Test
-    fun snapshotReportsActualLocalMembership() {
-        val snapshot = endpoint.snapshot()
-        assertThat(snapshot["clusterName"]).isEqualTo(hazelcast.config.clusterName)
-        assertThat(snapshot["localMemberId"])
-            .isEqualTo(hazelcast.cluster.localMember.uuid.toString())
-        assertThat(snapshot["running"]).isEqualTo(true)
-        assertThat(snapshot["members"] as List<*>).hasSize(hazelcast.cluster.members.size)
-    }
 
     @Test
     fun usesHazelcastInsteadOfLocalEventStore() {

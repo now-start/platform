@@ -140,17 +140,3 @@ and registry replication on a real Swarm before relying on this for availability
 ### Admin Swarm bootstrap
 
 Admin은 `app.cluster.name`, `app.cluster.members`, `app.cluster.network-cidr`를 사용한다. 지정한 CIDR에 속한 로컬 IPv4를 선택하므로 동료 태스크 DNS가 아직 비어 있어도 시작할 수 있다. 구버전 `admin.cluster.*`와 DNS 기반 bind-host 설정은 제거했다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.
-
-### Admin 운영 모니터링
-
-Admin 상단의 **운영 모니터링** 하위 메뉴에서 **서킷 브레이커**(`/platform-monitor/circuits`)와 **Hazelcast**(`/platform-monitor/hazelcast`)를 각각 별도 페이지로 조회한다. 각 페이지는 해당 엔드포인트만 조회한다.
-Vue 기반 SBA 확장 JS/CSS를 classpath `META-INF/spring-boot-admin-server-ui/extensions/platform-monitor`에서 자동 로드한다. 별도 프런트엔드 빌드는 없다.
-
-- Gateway `circuitbreakersnapshot`: 이미 생성된 서킷의 상태, 슬라이딩 윈도우 실패율/느린 호출률/호출 수를 읽는다. 조회로 서킷을 생성하거나 상태를 변경하지 않는다.
-- Admin/Gateway `hazelcastcluster`: 클러스터 이름, 로컬 멤버 UUID, 해당 인스턴스가 관측한 멤버 UUID/주소를 반환한다. 맵/세션 데이터는 읽지 않는다.
-- UI는 SBA의 인스턴스 프록시로 10초마다 조회한다(동시 요청 최대 4개, 요청 제한 5초). 마지막 완료 시각을 표시한다. 이전 정상 응답을 실패 시 정상 데이터로 재사용하지 않는다.
-- Hazelcast는 같은 이름의 인스턴스별 UUID 집합을 비교한다. 불일치는 가입/탈퇴 중에도 발생하므로 즉시 네트워크 분리로 단정하지 않는다. 하나의 관측자만 있으면 비교 불가이며, 관측된 로컬 멤버 수/전체 보고 멤버 수를 함께 표시한다.
-- 다른 애플리케이션은 해당 Actuator 엔드포인트를 구현/노출해야 표시된다. 엔드포인트 부재, 요청 실패, 호출 전 빈 서킷은 서로 구분한다. 현재 수집 범위는 Admin/Gateway이며 이력 저장이나 서킷 제어 기능은 없다.
-- 기존 공통 Actuator 노출 설정을 사용한다. 관리 포트와 Admin 접근은 운영 관리 네트워크/인증 정책 안에서 제공해야 한다.
-
-검증: `./gradlew :admin:check :gateway:check`, `node --test admin/src/test/js/monitor.test.cjs`.
