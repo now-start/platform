@@ -10,6 +10,9 @@ spring:
   session:
     timeout: 30m
   cloud:
+    circuitbreaker:
+      resilience4j:
+        disable-time-limiter: true
     loadbalancer:
       cache:
         enabled: false
@@ -17,6 +20,7 @@ spring:
       server:
         webflux:
           default-filters:
+            - name: CircuitBreaker
             - name: Retry
           trusted-proxies: '^(127\.|10\.|100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.).*'
           forwarded:

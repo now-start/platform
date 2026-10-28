@@ -42,9 +42,9 @@ class GatewayServiceApplicationTest {
     }
 
     @Test
-    @DisplayName("전역 CircuitBreaker가 애플리케이션 컨텍스트에 없어야 한다")
-    fun circuitBreakerShouldNotBeConfigured() {
+    @DisplayName("경로별 CircuitBreaker를 생성하는 팩토리가 등록되어야 한다")
+    fun circuitBreakerFactoryIsConfigured() {
         then(applicationContext.getBeanNamesForType(ReactiveCircuitBreakerFactory::class.java))
-            .isEmpty()
+            .hasSize(1)
     }
 }

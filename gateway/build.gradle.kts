@@ -8,6 +8,10 @@ dependencies {
     add("implementation", "org.springframework.cloud:spring-cloud-starter-config")
     add("implementation", "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     add("implementation", "org.springframework.cloud:spring-cloud-starter-gateway-server-webflux")
+    add(
+        "implementation",
+        "org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j",
+    )
     add("testImplementation", "io.projectreactor:reactor-test")
     add("testImplementation", "org.springframework.security:spring-security-test")
 }

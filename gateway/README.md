@@ -106,8 +106,29 @@ Spring 설정 우선순위에 따라 **리스트는 통째로 교체**된다. Co
 
 ## 기본 재시도
 
-Config Server의 `config/gateway/gateway.yaml`에서 `default-filters`에 `name: Retry`만 지정한다. 별도 인자나 커스텀 필터 없이 Spring Cloud Gateway 기본 정책을 사용한다.
+Config Server의 `config/gateway/gateway.yaml`에서 `default-filters`에 CircuitBreaker 다음으로 `name: Retry`를 지정한다. Retry는 별도 인자 없이 Spring Cloud Gateway 기본 정책을 사용한다.
 GET 요청만 전체 HTTP 5xx 응답, `IOException`, Gateway의 `TimeoutException`에 최대 3회 재시도한다(최초 요청 포함 최대 4회). HEAD·POST·PUT·PATCH·DELETE·OPTIONS는 재시도하지 않는다.
 재시도만으로 정상 인스턴스 선택이나 롤링 배포 무중단을 보장하지 않는다.
+
+## 서비스별 서킷
+
+Reactive Resilience4j starter와 `default-filters`의 `name: CircuitBreaker`를 추가하고 TimeLimiter만 비활성화한다.
+필터 순서는 `CircuitBreaker → Retry → 하위 서비스`다. 별도 인자나 커스텀 필터는 없다.
+서킷 이름을 생략하면 경로 ID를 사용하므로 Eureka 자동 탐색 경로는 서비스별로 분리된다.
+각 Gateway 프로세스가 독립적으로 상태를 보관하며 Hazelcast로 공유하지 않는다.
+
+- 서킷 기본값: 최근 100건, 최소 100건, 실패율 50%, OPEN 대기 60초, HALF_OPEN 시험 10건.
+- `statusCodes` 기본값은 빈 목록이다. 최종 HTTP 5xx 응답 자체는 서킷 실패로 집계하지 않는다.
+  GET 5xx의 기본 Retry는 유지되며, 재시도 후 성공하면 서킷 성공 1건으로 집계한다.
+- 최종 연결 오류 등 예외는 실패로 집계한다. OPEN에서 거부된 새 요청은 503으로 응답한다.
+- `spring.cloud.circuitbreaker.resilience4j.disable-time-limiter=true`로 추가 TimeLimiter만 끈다.
+  정상적인 2초 이상 요청을 1초에 끊지 않으며 기존 HTTP 클라이언트 타임아웃은 유지한다.
+  서킷은 응답 본문 전달 전에 집계하므로 이후 본문 전송 오류는 집계하지 않는다.
+- 서킷 Health Indicator는 별도로 활성화하지 않는다. 지표는 `resilience4j.circuitbreaker.*`로 조회한다.
+
+`CircuitBreakerIntegrationTest`는 실제 HTTP 요청으로 기본 Retry와 서킷 집계, HTTP 오류 응답 보존,
+OPEN 차단, 경로별 격리, HALF_OPEN 회복, 2초 응답 허용과 지표 등록을 검증한다.
+중앙 설정만 먼저 배포하면 구버전 Gateway가 CircuitBreaker 필터를 찾지 못할 수 있으므로
+의존성을 추가한 Gateway와 중앙 설정을 함께 반영한다. Admin 커스텀 화면은 별도 작업이다.
 
 클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 로컬 주소 선택도 동일한 `network-cidr` 방식이며, 원격 멤버 주소를 제한하는 interfaces 필터는 사용하지 않는다. Gateway 코드와 중앙 설정을 함께 반영한다.
