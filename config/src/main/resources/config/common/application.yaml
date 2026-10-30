@@ -54,6 +54,12 @@ otel:
   exporter:
     otlp:
       endpoint: '{cipher}0c1ba71e78b809e8ef24e132beb02fce505e327046a8a8df0def7f654a8deb10085b2cdbafe37a57c514dcd47023117a'
+  # JVM 지표는 Micrometer로 통일해 OTel 런타임 지표와 중복되지 않게 한다.
+  instrumentation:
+    micrometer:
+      enabled: true
+    runtime-telemetry:
+      enabled: false
 
 logging:
   charset:
