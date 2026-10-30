@@ -1,4 +1,4 @@
-version = "2.1.24"
+version = "2.1.25"
 
 dependencies {
     add("implementation", "org.springframework.cloud:spring-cloud-config-server")
