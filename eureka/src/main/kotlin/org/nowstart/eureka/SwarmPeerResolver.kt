@@ -15,6 +15,7 @@ class SwarmPeerResolver(
     private val lookup: AddressLookup = AddressLookup(::lookupAddresses),
     private val localAddresses: LocalAddresses = LocalAddresses(::localAddresses),
     private val pause: (Long) -> Unit = Thread::sleep,
+    private val bootstrapAddresses: LocalAddresses = LocalAddresses(::hostnameAddresses),
 ) {
     val localAddress = selectLocalAddress()
     private var lastKnownPeers: List<String> = emptyList()
@@ -82,6 +83,25 @@ class SwarmPeerResolver(
                 }
             }
         }
+        // Swarm does not publish unhealthy tasks in service DNS. Docker's own hostname
+        // is available in /etc/hosts before health checks pass on the single overlay.
+        val bootstrap =
+            bootstrapAddresses
+                .get()
+                .map(InetAddress::getByName)
+                .filterIsInstance<Inet4Address>()
+                .filterNot { it.isLoopbackAddress }
+                .map { it.hostAddress }
+                .toSet()
+                .intersect(localAddresses.get())
+        if (bootstrap.size == 1) {
+            log.warn(
+                "Task DNS is not ready for {}; bootstrapping with Docker hostname address {}",
+                service,
+                bootstrap.single(),
+            )
+            return bootstrap.single()
+        }
         throw IllegalStateException(
             "Cannot discover local task address for $service after 10 attempts",
             failure,
@@ -117,6 +137,13 @@ class SwarmPeerResolver(
                 context.close()
             }
         }
+
+        private fun hostnameAddresses(): Set<String> =
+            InetAddress.getAllByName(
+                    System.getenv("HOSTNAME") ?: InetAddress.getLocalHost().hostName,
+                )
+                .map { it.hostAddress }
+                .toSet()
 
         private fun localAddresses(): Set<String> =
             NetworkInterface.networkInterfaces().use { interfaces ->

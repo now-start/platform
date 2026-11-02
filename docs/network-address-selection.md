@@ -25,7 +25,8 @@ Admin·Gateway는 GRACEFUL 종료 훅을 사용한다. Barosteel은 HTTP gracefu
 ## Eureka
 
 task DNS의 IPv4 응답과 로컬 IP의 교집합이 정확히 한 개일 때 자기 주소로 선택한다.
-초기 탐색은 최대 10회, 시도 사이 1초 대기하며 끝까지 실패하면 기동 오류로 처리한다. DNS 조회 시간은 별도다.
+초기 탐색은 최대 10회, 시도 사이 1초 대기한다. DNS 조회 시간은 별도다.
+Swarm은 healthy 이전 task를 DNS에 싣지 않으므로 실패 시 Docker 자체 hostname의 IPv4와 로컬 IP의 교집합 한 개로 부트스트랩한다. loopback·모호한 주소는 거부한다. healthy 이후 task DNS로 피어를 갱신한다. 이 방식은 Eureka가 공통 overlay 하나에만 연결되는 구성을 전제로 한다.
 다중 인터페이스와 DNS 지연을 고려하며, 최초 task DNS 등록 시점은 실제 Swarm에서 검증한다.
 선택한 자기 주소는 복제 대상에서 제외하고 서버 ipAddr·hostName·상태·헬스체크 URL에 적용한다.
 기동 후 DNS 실패·빈 응답·자기 주소 누락에는 이전 피어 목록을 유지한다.

@@ -9,6 +9,44 @@ import org.junit.jupiter.api.Test
 
 class SwarmPeerResolverTests {
     @Test
+    fun bootstrapsFromDockerHostnameUntilHealthyTaskDnsAppears() {
+        var healthy = false
+        val resolver =
+            SwarmPeerResolver(
+                "tasks.eureka",
+                8761,
+                {
+                    if (!healthy) throw NamingException("task not healthy")
+                    setOf("10.0.0.1", "10.0.0.2")
+                },
+                { setOf("10.0.0.1", "172.18.0.2") },
+                {},
+                { setOf("10.0.0.1") },
+            )
+        assertThat(resolver.localAddress).isEqualTo("10.0.0.1")
+        assertThat(resolver.resolve()).isEmpty()
+        healthy = true
+        assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
+    }
+
+    @Test
+    fun rejectsAmbiguousOrLoopbackBootstrapAddresses() {
+        for (host in
+            listOf(setOf("10.0.0.1", "10.0.0.2"), setOf("127.0.0.1"), setOf("192.168.0.1"))) {
+            assertThatIllegalStateException().isThrownBy {
+                SwarmPeerResolver(
+                    "tasks.eureka",
+                    8761,
+                    { emptySet() },
+                    { setOf("10.0.0.1", "10.0.0.2", "127.0.0.1") },
+                    {},
+                    { host },
+                )
+            }
+        }
+    }
+
+    @Test
     fun discoversAddedPeersAndReplacedTaskAddressesAndRemovesLastPeer() {
         val addresses = AtomicReference(setOf("10.0.0.1"))
         val resolver =
