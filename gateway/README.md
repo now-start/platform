@@ -6,11 +6,9 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 ## 클러스터와 세션
 
 Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
-`app.cluster.name`, `members`, `network-cidr`, `port`를 설정한다.
-운영 기본값은 `gateway`, `tasks.platform_gateway.platform_default`, `10.0.11.0/24`, `5701`이다.
-CIDR에 속하는 로컬 IPv4 하나를 선택하며, 멤버 DNS가 비어 있어도 주소를 선택할 수 있다.
-일치하는 주소가 없거나 여러 개이면 기동 오류로 처리한다. GitOps subnet과 network-cidr를 일치시킨다.
-로컬에서는 network-cidr를 `127.0.0.0/8`로 지정하며, 여러 인스턴스는 같은 클러스터 이름과 서로 접근 가능한 멤버 주소를 사용한다.
+`app.cluster.name`, `members`, `port`를 설정한다.
+운영 값은 `gateway`, `tasks.platform_gateway`, `5701`이다.
+로컬 주소 선택은 Hazelcast TCP/IP 기본 로직에 맡긴다. 로컬에서는 members=127.0.0.1을 사용한다.
 Hazelcast 포트는 클러스터 내부 통신용이며 외부에 공개하지 않는다.
 
 - 세션 맵: `nowstart:gateway:sessions`; 감사 맵: `nowstart:gateway:audit`.
@@ -131,4 +129,4 @@ OPEN 차단, 경로별 격리, HALF_OPEN 회복, 2초 응답 허용과 지표 �
 중앙 설정만 먼저 배포하면 구버전 Gateway가 CircuitBreaker 필터를 찾지 못할 수 있으므로
 의존성을 추가한 Gateway와 중앙 설정을 함께 반영한다. Admin 커스텀 화면은 별도 작업이다.
 
-클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 로컬 주소 선택도 동일한 `network-cidr` 방식이며, 원격 멤버 주소를 제한하는 interfaces 필터는 사용하지 않는다. Gateway 코드와 중앙 설정을 함께 반영한다.
+클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 공통 overlay에서 TCP/IP 멤버 탐색을 사용하며 CIDR과 로컬 주소 강제 지정은 사용하지 않는다.

@@ -18,7 +18,8 @@ class HazelcastClusterTest {
     @Test
     fun sharesAdminEventsAndRetainsThemAfterMemberLoss() {
         val cluster: String = "admin-test-" + UUID.randomUUID()
-        val first: HazelcastInstance = Hazelcast.newHazelcastInstance(config(cluster, emptyList()))
+        val first: HazelcastInstance =
+            Hazelcast.newHazelcastInstance(config(cluster, listOf("127.0.0.1")))
         var second: HazelcastInstance? = null
         try {
             second =
@@ -70,7 +71,6 @@ class HazelcastClusterTest {
                 .hazelcastConfig(
                     cluster,
                     members,
-                    "127.0.0.0/8",
                     0,
                 )
         config.setProperty("hazelcast.operation.thread.count", "2")

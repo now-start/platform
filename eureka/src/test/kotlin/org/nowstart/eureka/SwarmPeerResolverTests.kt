@@ -1,118 +1,135 @@
 package org.nowstart.eureka
 
+import java.net.SocketException
 import java.util.concurrent.atomic.AtomicReference
 import javax.naming.NamingException
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.junit.jupiter.api.Test
 
 class SwarmPeerResolverTests {
-
     @Test
     fun discoversAddedPeersAndReplacedTaskAddressesAndRemovesLastPeer() {
-        val addresses = AtomicReference<Set<String>?>(setOf("10.0.0.1"))
+        val addresses = AtomicReference(setOf("10.0.0.1"))
         val resolver =
             SwarmPeerResolver(
                 "tasks.eureka",
                 8761,
-                "10.0.0.0/24",
-                { _ -> requireNotNull(addresses.get()) },
+                { addresses.get() },
                 { setOf("10.0.0.1", "10.1.0.1") },
             )
+        assertThat(resolver.localAddress).isEqualTo("10.0.0.1")
         assertThat(resolver.resolve()).isEmpty()
-
-        addresses.set(setOf("10.0.0.1", "10.0.0.2", "10.0.0.3", "10.1.0.1", "10.1.0.2"))
+        addresses.set(setOf("10.0.0.1", "10.0.0.2", "10.0.0.3"))
         assertThat(resolver.resolve())
-            .containsExactly(
-                "http://10.0.0.2:8761/eureka/",
-                "http://10.0.0.3:8761/eureka/",
-            )
-
+            .containsExactly("http://10.0.0.2:8761/eureka/", "http://10.0.0.3:8761/eureka/")
         addresses.set(setOf("10.0.0.1", "10.0.0.4"))
         assertThat(resolver.resolve()).containsExactly("http://10.0.0.4:8761/eureka/")
-
         addresses.set(setOf("10.0.0.1"))
         assertThat(resolver.resolve()).isEmpty()
     }
 
     @Test
-    fun keepsLastKnownPeersOnDnsFailureOrEmptyOrUnrelatedAnswers() {
+    fun keepsLastKnownPeersOnDnsFailureEmptyOrMissingSelf() {
         val addresses = AtomicReference<Set<String>?>(setOf("10.0.0.1", "10.0.0.2"))
         val resolver =
             SwarmPeerResolver(
                 "tasks.eureka",
                 8761,
-                "10.0.0.0/24",
-                { name ->
-                    if (addresses.get() == null) {
-                        throw NamingException("temporary failure")
-                    }
-                    requireNotNull(addresses.get())
-                },
-                { setOf("10.0.0.1") },
-            )
-
-        assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
-        addresses.set(null)
-        assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
-        addresses.set(setOf())
-        assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
-        addresses.set(setOf("10.9.0.2"))
-        assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
-    }
-
-    @Test
-    fun permitsStartupBeforeDnsIsAvailable() {
-        val resolver =
-            SwarmPeerResolver(
-                "tasks.eureka",
-                8761,
-                "10.0.0.0/24",
-                { name -> throw NamingException("not yet registered") },
-                { setOf("10.0.0.1") },
-            )
-        assertThat(resolver.resolve()).isEmpty()
-        assertThat(resolver.localUrl()).isEqualTo("http://127.0.0.1:8761/eureka/")
-    }
-
-    @Test
-    fun rejectsMissingOrAmbiguousOverlayBeforeDnsLookup() {
-        for (local in listOf(setOf("10.1.0.1"), setOf("10.0.0.1", "10.0.0.2"))) {
-            assertThatIllegalStateException().isThrownBy {
-                SwarmPeerResolver(
-                    "tasks.eureka",
-                    8761,
-                    "10.0.0.0/24",
-                    { error("DNS must not be used to select the local address") },
-                    { local },
-                )
-            }
-        }
-        assertThatIllegalArgumentException().isThrownBy {
-            SwarmPeerResolver(
-                "tasks.eureka",
-                8761,
-                "10.0.0.0/33",
-                { error("DNS must not be queried") },
-                { setOf("10.0.0.1") },
-            )
-        }
-    }
-
-    @Test
-    fun doesNotReplacePeersWithAnotherNetworksDnsAnswer() {
-        val answers = AtomicReference(setOf("10.0.0.1", "10.0.0.2"))
-        val resolver =
-            SwarmPeerResolver(
-                "tasks.eureka",
-                8761,
-                "10.0.0.0/24",
-                { answers.get() },
+                { addresses.get() ?: throw NamingException("temporary failure") },
                 { setOf("10.0.0.1", "10.1.0.1") },
             )
         assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
-        answers.set(setOf("10.1.0.1", "10.1.0.2"))
+        for (answer in listOf(null, emptySet(), setOf("10.1.0.1", "10.1.0.2"))) {
+            addresses.set(answer)
+            assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
+        }
+    }
+
+    @Test
+    fun retriesStartupUntilDnsContainsLocalAddress() {
+        var attempts = 0
+        val waits = mutableListOf<Long>()
+        val resolver =
+            SwarmPeerResolver(
+                "tasks.eureka",
+                8761,
+                {
+                    when (++attempts) {
+                        1 -> throw NamingException("not registered")
+                        2 -> emptySet()
+                        3 -> setOf("10.0.0.2")
+                        else -> setOf("10.0.0.1", "10.0.0.2")
+                    }
+                },
+                { setOf("10.0.0.1", "192.168.1.1") },
+                { waits.add(it) },
+            )
+        assertThat(resolver.localAddress).isEqualTo("10.0.0.1")
+        assertThat(waits).containsExactly(1000L, 1000L, 1000L)
+        assertThat(resolver.localUrl()).isEqualTo("http://127.0.0.1:8761/eureka/")
         assertThat(resolver.resolve()).containsExactly("http://10.0.0.2:8761/eureka/")
+    }
+
+    @Test
+    fun failsAfterBoundedRetriesForMissingOrAmbiguousLocalAddress() {
+        for (local in listOf(setOf("192.168.1.1"), setOf("10.0.0.1", "10.0.0.2"))) {
+            var attempts = 0
+            var waits = 0
+            assertThatIllegalStateException()
+                .isThrownBy {
+                    SwarmPeerResolver(
+                        "tasks.eureka",
+                        8761,
+                        {
+                            attempts++
+                            setOf("10.0.0.1", "10.0.0.2")
+                        },
+                        { local },
+                        { waits++ },
+                    )
+                }
+                .withMessageContaining("after 10 attempts")
+            assertThat(attempts).isEqualTo(10)
+            assertThat(waits).isEqualTo(9)
+        }
+    }
+
+    @Test
+    fun retriesLocalInterfaceFailureAndIgnoresIpv6DnsAnswers() {
+        var attempts = 0
+        val resolver =
+            SwarmPeerResolver(
+                "tasks.eureka",
+                8761,
+                { setOf("10.0.0.1", "::1") },
+                {
+                    if (++attempts == 1) throw SocketException("temporary failure")
+                    setOf("10.0.0.1", "::1")
+                },
+                {},
+            )
+        assertThat(resolver.localAddress).isEqualTo("10.0.0.1")
+        assertThat(attempts).isEqualTo(2)
+    }
+
+    @Test
+    fun interruptedStartupRestoresInterruptFlag() {
+        try {
+            assertThatIllegalStateException()
+                .isThrownBy {
+                    SwarmPeerResolver(
+                        "tasks.eureka",
+                        8761,
+                        { emptySet() },
+                        { emptySet() },
+                        { throw InterruptedException() },
+                    )
+                }
+                .withCauseInstanceOf(InterruptedException::class.java)
+            assertThat(Thread.currentThread().isInterrupted).isTrue()
+        } finally {
+            Thread.interrupted()
+        }
     }
 }

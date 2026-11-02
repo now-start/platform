@@ -5,9 +5,6 @@ import com.hazelcast.config.InMemoryFormat
 import com.hazelcast.config.MapConfig
 import com.hazelcast.config.MergePolicyConfig
 import de.codecentric.boot.admin.server.config.AdminServerHazelcastAutoConfiguration.DEFAULT_NAME_EVENT_STORE_MAP
-import java.net.Inet4Address
-import java.net.InetAddress
-import java.net.NetworkInterface
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -18,17 +15,9 @@ class HazelcastConfiguration {
     fun hazelcastConfig(
         @Value("\${app.cluster.name:\${spring.application.name}}") name: String,
         @Value("\${app.cluster.members}") members: List<String>,
-        @Value("\${app.cluster.network-cidr}") networkCidr: String,
         @Value("\${app.cluster.port:5701}") port: Int,
     ): Config {
         val config = Config().setClusterName(name)
-        NetworkInterface.networkInterfaces().use { interfaces ->
-            val addresses = interfaces.flatMap { it.inetAddresses() }.toList()
-            config.setProperty(
-                "hazelcast.local.localAddress",
-                selectLocalAddress(networkCidr, addresses),
-            )
-        }
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")
         val network = config.networkConfig.setPort(port).setPortAutoIncrement(false)
@@ -49,37 +38,4 @@ class HazelcastConfiguration {
             .setMergePolicyConfig(
                 MergePolicyConfig("com.hazelcast.spi.merge.PutIfAbsentMergePolicy", 100),
             )
-
-    companion object {
-        fun selectLocalAddress(cidr: String, addresses: List<InetAddress>): String {
-            val parts = cidr.split('/')
-            require(parts.size == 2) { "Expected IPv4 CIDR: $cidr" }
-            val octets = parts[0].split('.').map { it.toIntOrNull() }
-            val prefix = parts[1].toIntOrNull()
-            require(
-                octets.size == 4 &&
-                    octets.all { it != null && it in 0..255 } &&
-                    prefix != null &&
-                    prefix in 1..32,
-            ) {
-                "Expected IPv4 CIDR: $cidr"
-            }
-            val subnet = octets.map { it!!.toByte() }.toByteArray()
-            val candidates =
-                addresses
-                    .filterIsInstance<Inet4Address>()
-                    .filter { address ->
-                        (0 until prefix).all { bit ->
-                            val mask = 1 shl (7 - bit % 8)
-                            (address.address[bit / 8].toInt() and mask) ==
-                                (subnet[bit / 8].toInt() and mask)
-                        }
-                    }
-                    .distinct()
-            check(candidates.size == 1) {
-                "Expected one local IPv4 in $cidr; candidates=$candidates"
-            }
-            return candidates.single().hostAddress
-        }
-    }
 }

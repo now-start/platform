@@ -12,27 +12,17 @@ import org.slf4j.LoggerFactory
 class SwarmPeerResolver(
     private val service: String,
     private val port: Int,
-    private val networkCidr: String,
     private val lookup: AddressLookup = AddressLookup(::lookupAddresses),
     private val localAddresses: LocalAddresses = LocalAddresses(::localAddresses),
+    private val pause: (Long) -> Unit = Thread::sleep,
 ) {
-    val localAddress =
-        selectLocalAddress(
-            networkCidr,
-            localAddresses.get().map(InetAddress::getByName),
-        )
+    val localAddress = selectLocalAddress()
     private var lastKnownPeers: List<String> = emptyList()
 
     @Synchronized
     fun resolve(): List<String> {
         try {
-            val addresses =
-                matching(
-                        networkCidr,
-                        lookup.find(service).map(InetAddress::getByName),
-                    )
-                    .map { it.hostAddress }
-                    .toSet()
+            val addresses = taskAddresses()
             // DNS 응답이 비어 있다고 해서 모든 피어가 떠난 것은 아니다.
             if (addresses.isEmpty())
                 throw NamingException("No task addresses returned for $service")
@@ -57,6 +47,47 @@ class SwarmPeerResolver(
         return lastKnownPeers
     }
 
+    private fun taskAddresses(): Set<String> =
+        lookup
+            .find(service)
+            .map(InetAddress::getByName)
+            .filterIsInstance<Inet4Address>()
+            .map { it.hostAddress }
+            .toSet()
+
+    private fun selectLocalAddress(): String {
+        var failure: Exception? = null
+        repeat(10) { attempt ->
+            try {
+                val candidates = taskAddresses().intersect(localAddresses.get())
+                if (candidates.size == 1) return candidates.single()
+                failure =
+                    NamingException(
+                        "Expected one local task IPv4 for $service; candidates=$candidates",
+                    )
+            } catch (ex: NamingException) {
+                failure = ex
+            } catch (ex: SocketException) {
+                failure = ex
+            }
+            if (attempt < 9) {
+                try {
+                    pause(1000)
+                } catch (ex: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    throw IllegalStateException(
+                        "Interrupted while discovering local task address for $service",
+                        ex,
+                    )
+                }
+            }
+        }
+        throw IllegalStateException(
+            "Cannot discover local task address for $service after 10 attempts",
+            failure,
+        )
+    }
+
     fun localUrl(): String = "http://127.0.0.1:$port/eureka/"
 
     fun interface AddressLookup {
@@ -68,42 +99,6 @@ class SwarmPeerResolver(
     }
 
     companion object {
-        private fun selectLocalAddress(cidr: String, addresses: List<InetAddress>): String {
-            val candidates = matching(cidr, addresses)
-            check(candidates.size == 1) {
-                "Expected one local IPv4 in $cidr; candidates=$candidates"
-            }
-            return candidates.single().hostAddress
-        }
-
-        private fun matching(cidr: String, addresses: List<InetAddress>): List<Inet4Address> {
-            val parts = cidr.split('/')
-            require(parts.size == 2) { "Expected IPv4 CIDR: $cidr" }
-            val octets = parts[0].split('.').map { it.toIntOrNull() }
-            val prefix = parts[1].toIntOrNull()
-            require(
-                octets.size == 4 &&
-                    octets.all { it != null && it in 0..255 } &&
-                    prefix != null &&
-                    prefix in 1..32,
-            ) {
-                "Expected IPv4 CIDR: $cidr"
-            }
-            val subnet = octets.map { it!!.toByte() }.toByteArray()
-            val candidates =
-                addresses
-                    .filterIsInstance<Inet4Address>()
-                    .filter { address ->
-                        (0 until prefix).all { bit ->
-                            val mask = 1 shl (7 - bit % 8)
-                            (address.address[bit / 8].toInt() and mask) ==
-                                (subnet[bit / 8].toInt() and mask)
-                        }
-                    }
-                    .distinct()
-            return candidates
-        }
-
         private val log = LoggerFactory.getLogger(SwarmPeerResolver::class.java)
 
         private fun lookupAddresses(service: String): Set<String> {

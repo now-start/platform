@@ -60,8 +60,7 @@ class SwarmDiscoveryConfiguration {
     fun swarmPeerResolver(
         @Value("\${eureka.swarm.service:tasks.eureka}") service: String,
         @Value("\${server.port:8761}") port: Int,
-        @Value("\${eureka.swarm.network-cidr}") networkCidr: String,
-    ) = SwarmPeerResolver(service, port, networkCidr)
+    ) = SwarmPeerResolver(service, port)
 
     @Bean
     @ConfigurationProperties("eureka.client")

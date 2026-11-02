@@ -32,7 +32,6 @@ class HazelcastStorageTest {
                 .hazelcastConfig(
                     "storage-" + UUID.randomUUID(),
                     listOf("127.0.0.1"),
-                    "127.0.0.0/8",
                     0,
                 )
         member = Hazelcast.newHazelcastInstance(config)

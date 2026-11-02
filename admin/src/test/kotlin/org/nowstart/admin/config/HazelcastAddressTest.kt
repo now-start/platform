@@ -1,43 +1,19 @@
 package org.nowstart.admin.config
 
-import java.net.InetAddress
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class HazelcastAddressTest {
     @Test
-    fun selectsOnlyTheConfiguredOverlayWithoutPeerDns() {
-        assertThat(
-                HazelcastConfiguration.selectLocalAddress(
-                    "10.0.11.0/24",
-                    listOf(
-                        InetAddress.getByName("10.0.3.6"),
-                        InetAddress.getByName("10.0.11.184"),
-                    ),
-                ),
-            )
-            .isEqualTo("10.0.11.184")
+    fun delegatesAddressSelectionAndRetainsUnresolvedMembers() {
         val config =
             HazelcastConfiguration()
-                .hazelcastConfig(
-                    "test",
-                    listOf("tasks.unavailable.invalid"),
-                    "127.0.0.0/8",
-                    5701,
-                )
-        assertThat(config.getNetworkConfig().getJoin().getTcpIpConfig().getMembers())
+                .hazelcastConfig("test", listOf("tasks.unavailable.invalid"), 5701)
+        assertThat(config.getProperty("hazelcast.local.localAddress")).isNull()
+        assertThat(config.networkConfig.interfaces.isEnabled).isFalse()
+        assertThat(config.networkConfig.join.tcpIpConfig.members)
             .containsExactly("tasks.unavailable.invalid")
-    }
-
-    @Test
-    fun rejectsMissingOrAmbiguousLocalAddresses() {
-        val addresses =
-            listOf(InetAddress.getByName("10.0.11.2"), InetAddress.getByName("10.0.11.3"))
-        assertThatIllegalStateException()
-            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.11.0/24", addresses) })
-        assertThatIllegalStateException()
-            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.3.0/24", addresses) })
-        assertThatIllegalArgumentException()
-            .isThrownBy({ HazelcastConfiguration.selectLocalAddress("10.0.0.0/33", addresses) })
+        assertThat(config.networkConfig.join.tcpIpConfig.isEnabled).isTrue()
+        assertThat(config.networkConfig.isPortAutoIncrement).isFalse()
     }
 }

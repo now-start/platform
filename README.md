@@ -139,4 +139,4 @@ and registry replication on a real Swarm before relying on this for availability
 
 ### Admin Swarm bootstrap
 
-Admin은 `app.cluster.name`, `app.cluster.members`, `app.cluster.network-cidr`를 사용한다. 지정한 CIDR에 속한 로컬 IPv4를 선택하므로 동료 태스크 DNS가 아직 비어 있어도 시작할 수 있다. 구버전 `admin.cluster.*`와 DNS 기반 bind-host 설정은 제거했다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.
+Admin은 `app.cluster.name`, `app.cluster.members`를 사용한다. 공통 `platform_default` overlay에서 Hazelcast 기본 주소 선택을 사용한다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.

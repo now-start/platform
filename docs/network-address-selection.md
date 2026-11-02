@@ -1,38 +1,43 @@
 # Hazelcast·Eureka 서버 네트워크 설정
 
-GitOps의 고정 overlay subnet을 유지하며 로컬 주소를 DNS 없이 CIDR로 선택한다.
+플랫폼·앱·Grafana는 MTU 1200의 공통 platform_default overlay를 사용한다. 고정 subnet과 CIDR 설정은 사용하지 않는다.
 Docker API 접근이나 별도 공통 라이브러리는 추가하지 않는다.
 
-| 대상 | 설정 | 운영 대역 |
-| --- | --- | --- |
-| Admin·Gateway Hazelcast | `app.cluster.network-cidr` | `10.0.11.0/24` |
-| Barosteel Hazelcast | `app.cluster.network-cidr` | `10.0.3.0/24` |
-| Eureka 서버 간 피어 연결·자기 등록 주소 | `eureka.swarm.network-cidr` | `10.0.11.0/24` |
+| 대상 | 멤버 DNS |
+| --- | --- |
+| Admin Hazelcast | tasks.platform_admin |
+| Gateway Hazelcast | tasks.platform_gateway |
+| Barosteel Hazelcast | tasks.barosteel_barosteel |
+| Eureka 서버 피어 | tasks.platform_eureka |
 
-세 앱의 Hazelcast 설정은 `HazelcastConfiguration.hazelcastConfig`에서 구성한다.
-`app.cluster.name`은 `spring.application.name`을 기본값으로 사용한다.
-`members`·`network-cidr`는 필수이며 로컬 실행에서는 `127.0.0.1`, `127.0.0.0/8`을 지정한다.
+## Hazelcast
+
+app.cluster.name은 spring.application.name을 기본값으로 사용한다. members는 필수이며 로컬 실행에서는 127.0.0.1을 지정한다.
 기본 포트는 5701이고 자동 증가·자동 탐지·multicast를 끈다. TCP 멤버 탐색을 사용한다.
-종료 대기는 90초이고 동기 백업 1개·비동기 백업 0개를 사용한다.
-Admin·Gateway는 GRACEFUL 종료 훅을 사용한다. Barosteel은 HTTP graceful shutdown 이후 Spring이 인스턴스를 종료하도록 자체 종료 훅을 비활성화한다.
+로컬 주소를 강제로 지정하지 않고 Hazelcast 기본 로직으로 TCP 멤버 DNS와 일치하는 로컬 주소를 우선 선택한다.
+DNS에 자기 주소가 없으면 non-loopback 주소로 대체할 수 있으므로 실제 Swarm bind 주소와 멤버 합류를 확인해야 한다.
+overlay를 하나로 통합해도 ingress와 docker_gwbridge 등의 인터페이스가 있을 수 있다.
+
+종료 대기는 90초이며 동기 백업 1개·비동기 백업 0개를 유지한다.
+Admin·Gateway는 GRACEFUL 종료 훅을 사용한다. Barosteel은 HTTP graceful shutdown 이후 Spring이 인스턴스를 종료한다.
 세션 직렬화·이벤트 저장소·캐시 TTL·병합 정책은 서비스별 기존 동작을 유지한다.
 
-각 설정 클래스의 `selectLocalAddress`는 지정 CIDR에 속하는 로컬 IPv4 하나를 선택한다.
-잘못된 CIDR, 일치 주소 없음, 여러 주소 일치는 기동 오류로 처리한다.
-인터페이스 번호나 DNS 등록 순서에 의존하지 않는다.
+## Eureka
 
-Eureka는 `tasks.platform_eureka.platform_default`로 피어를 찾고, 응답 중 지정 CIDR의 주소만 사용한다.
-선택한 자기 주소는 복제 대상에서 제외한다. 다른 네트워크의 주소는 피어에 추가하지 않는다.
-같은 주소를 Eureka 서버 자신의 `ipAddr`·`hostName` 및 상태·헬스체크 URL에도 적용한다.
-설정 바인딩 후 등록 정보 생성 전에 적용하여 자동 감지한 다른 네트워크 주소가 등록되지 않게 한다.
-DNS가 아직 없거나 해당 네트워크의 자기 주소가 응답에 없으면 이전 피어 목록을 유지한다.
-최초 기동은 피어 없이 시작하고 기존 loopback URL로 부트스트랩하므로 healthy 이후 DNS 등록을 기다리며 기동이 막히지 않는다.
-다른 애플리케이션의 Eureka 접속 URL·자기 주소 등록 설정은 변경하지 않는다.
+task DNS의 IPv4 응답과 로컬 IP의 교집합이 정확히 한 개일 때 자기 주소로 선택한다.
+초기 탐색은 최대 10회, 시도 사이 1초 대기하며 끝까지 실패하면 기동 오류로 처리한다. DNS 조회 시간은 별도다.
+다중 인터페이스와 DNS 지연을 고려하며, 최초 task DNS 등록 시점은 실제 Swarm에서 검증한다.
+선택한 자기 주소는 복제 대상에서 제외하고 서버 ipAddr·hostName·상태·헬스체크 URL에 적용한다.
+기동 후 DNS 실패·빈 응답·자기 주소 누락에는 이전 피어 목록을 유지한다.
+자기 주소만 응답하면 정상 단일 인스턴스로 취급해 이전 피어를 제거하고 loopback URL로 부트스트랩한다.
+10초 주기 피어 갱신, 기존 연결 재사용 및 제거된 피어 종료 동작을 유지한다.
 
-## 반영
+## 반영과 검증
 
-Gateway는 기존 `interfaces`를 제거하고 `network-cidr`만 사용한다.
-Gateway·Eureka 앱 코드와 중앙 CIDR 설정을 함께 반영한다.
-네트워크 subnet 변경 시 해당 CIDR 설정을 함께 변경해야 한다. 이번 변경에서는 네트워크 재생성이 필요 없다.
+앱 코드·중앙 설정·GitOps Compose를 함께 준비한다. 기존 앱이 CIDR 설정을 요구하므로 설정만 먼저 제거하지 않는다.
+새 이미지 발행 후 배포 참조를 갱신한다. 기존 네트워크는 IPAM 선언 삭제만으로 대역이 바뀌지 않으며 자동 할당으로 전환하려면 재생성이 필요하다.
+서비스 중단을 포함한 적용·롤백 순서는 gitops의 docs/shared-overlay-migration.md를 따른다.
+다른 앱의 Eureka 접속 URL·자기 등록 설정은 변경하지 않는다.
 
 검증: `./gradlew :admin:test :gateway:test :eureka:test spotlessCheck`
+운영에서는 Hazelcast 합류·세션 공유, Eureka 교체·증감, Config 접근·LGTM 수신을 별도로 확인한다.
