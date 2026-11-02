@@ -139,4 +139,4 @@ and registry replication on a real Swarm before relying on this for availability
 
 ### Admin Swarm bootstrap
 
-Admin은 `app.cluster.name`, `app.cluster.members`를 사용한다. 공통 `platform_default` overlay에서 Hazelcast 기본 주소 선택을 사용한다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.
+Admin은 `app.cluster.name`, `app.cluster.members`를 사용한다. 공통 `platform_default` overlay에서 Docker hostname으로 Hazelcast 주소를 지정한다. 자세한 기준은 [Admin 운영 안내](admin/README.md)를 따른다.

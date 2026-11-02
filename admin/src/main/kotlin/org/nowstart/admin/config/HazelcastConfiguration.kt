@@ -16,8 +16,12 @@ class HazelcastConfiguration {
         @Value("\${app.cluster.name:\${spring.application.name}}") name: String,
         @Value("\${app.cluster.members}") members: List<String>,
         @Value("\${app.cluster.port:5701}") port: Int,
+        @Value("\${app.cluster.local-address:}") localAddress: String = "",
     ): Config {
         val config = Config().setClusterName(name)
+        if (localAddress.isNotBlank()) {
+            config.setProperty("hazelcast.local.localAddress", localAddress)
+        }
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")
         val network = config.networkConfig.setPort(port).setPortAutoIncrement(false)

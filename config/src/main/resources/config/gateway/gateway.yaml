@@ -52,6 +52,7 @@ spring:
 # Gateway 멤버는 Spring Boot Admin과 분리된 자체 클러스터를 구성한다.
 app:
   cluster:
+    local-address: '${HOSTNAME}'
     name: gateway
     members: tasks.platform_gateway
     port: 5701

@@ -8,7 +8,7 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
 `app.cluster.name`, `members`, `port`를 설정한다.
 운영 값은 `gateway`, `tasks.platform_gateway`, `5701`이다.
-로컬 주소 선택은 Hazelcast TCP/IP 기본 로직에 맡긴다. 로컬에서는 members=127.0.0.1을 사용한다.
+운영의 app.cluster.local-address는 Docker HOSTNAME을 사용한다. 로컬에서는 members=127.0.0.1을 사용한다.
 Hazelcast 포트는 클러스터 내부 통신용이며 외부에 공개하지 않는다.
 
 - 세션 맵: `nowstart:gateway:sessions`; 감사 맵: `nowstart:gateway:audit`.
@@ -129,4 +129,4 @@ OPEN 차단, 경로별 격리, HALF_OPEN 회복, 2초 응답 허용과 지표 �
 중앙 설정만 먼저 배포하면 구버전 Gateway가 CircuitBreaker 필터를 찾지 못할 수 있으므로
 의존성을 추가한 Gateway와 중앙 설정을 함께 반영한다. Admin 커스텀 화면은 별도 작업이다.
 
-클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 공통 overlay에서 TCP/IP 멤버 탐색을 사용하며 CIDR과 로컬 주소 강제 지정은 사용하지 않는다.
+클러스터 설정 접두사는 Admin·Barosteel과 동일하게 `app.cluster`를 사용한다. 공통 overlay에서 TCP/IP 멤버 탐색을 사용하며 CIDR 대신 Docker hostname으로 로컬 주소를 지정한다.

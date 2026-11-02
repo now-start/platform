@@ -5,6 +5,21 @@ import org.junit.jupiter.api.Test
 
 class HazelcastAddressTest {
     @Test
+    fun usesConfiguredDockerHostnameWithoutDependingOnTaskDns() {
+        val config =
+            HazelcastConfiguration()
+                .hazelcastConfig(
+                    "test",
+                    listOf("tasks.unavailable.invalid"),
+                    5701,
+                    "localhost",
+                )
+        assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("localhost")
+        assertThat(config.networkConfig.join.tcpIpConfig.members)
+            .containsExactly("tasks.unavailable.invalid")
+    }
+
+    @Test
     fun delegatesAddressSelectionAndRetainsUnresolvedMembers() {
         val config =
             HazelcastConfiguration()

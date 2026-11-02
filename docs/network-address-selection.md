@@ -14,8 +14,9 @@ Docker API 접근이나 별도 공통 라이브러리는 추가하지 않는다.
 
 app.cluster.name은 spring.application.name을 기본값으로 사용한다. members는 필수이며 로컬 실행에서는 127.0.0.1을 지정한다.
 기본 포트는 5701이고 자동 증가·자동 탐지·multicast를 끈다. TCP 멤버 탐색을 사용한다.
-로컬 주소를 강제로 지정하지 않고 Hazelcast 기본 로직으로 TCP 멤버 DNS와 일치하는 로컬 주소를 우선 선택한다.
-DNS에 자기 주소가 없으면 non-loopback 주소로 대체할 수 있으므로 실제 Swarm bind 주소와 멤버 합류를 확인해야 한다.
+운영은 app.cluster.local-address=${HOSTNAME}으로 Docker가 /etc/hosts에 등록한 공통 overlay 주소를 사용한다.
+실제 Swarm에서 healthy 이전 task DNS가 비어 있으면 Hazelcast 기본 선택이 docker_gwbridge 주소를 광고하는 문제가 확인돼 hostname을 명시한다. CIDR 파싱과 인터페이스 열거는 사용하지 않는다.
+로컬 실행에서는 이 설정을 생략해 기존 TCP/IP 기본 주소 선택을 사용할 수 있다.
 overlay를 하나로 통합해도 ingress와 docker_gwbridge 등의 인터페이스가 있을 수 있다.
 
 종료 대기는 90초이며 동기 백업 1개·비동기 백업 0개를 유지한다.
