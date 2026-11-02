@@ -21,5 +21,4 @@ spring:
 app:
   cluster:
     name: admin
-    members: tasks.platform_admin.platform_default
-    network-cidr: 10.0.11.0/24
+    members: tasks.platform_admin
