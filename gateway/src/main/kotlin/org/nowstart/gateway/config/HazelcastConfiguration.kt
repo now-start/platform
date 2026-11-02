@@ -5,6 +5,8 @@ import com.hazelcast.config.MapConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository
 import com.hazelcast.spring.session.HazelcastSessionConfiguration
+import java.net.Inet4Address
+import java.net.InetAddress
 import java.time.Duration
 import org.nowstart.gateway.audit.HazelcastAuditEventRepository
 import org.nowstart.gateway.session.HazelcastReactiveSessionRepository
@@ -26,7 +28,9 @@ class HazelcastConfiguration {
     ): Config {
         val config = Config().setClusterName(name)
         if (localAddress.isNotBlank()) {
-            config.setProperty("hazelcast.local.localAddress", localAddress)
+            val address =
+                InetAddress.getAllByName(localAddress).filterIsInstance<Inet4Address>().single()
+            config.setProperty("hazelcast.local.localAddress", address.hostAddress)
         }
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")

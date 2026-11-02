@@ -14,7 +14,7 @@ class HazelcastAddressTest {
                     5701,
                     "localhost",
                 )
-        assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("localhost")
+        assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1")
         assertThat(config.networkConfig.join.tcpIpConfig.members)
             .containsExactly("tasks.unavailable.invalid")
     }

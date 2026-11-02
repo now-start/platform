@@ -5,6 +5,8 @@ import com.hazelcast.config.InMemoryFormat
 import com.hazelcast.config.MapConfig
 import com.hazelcast.config.MergePolicyConfig
 import de.codecentric.boot.admin.server.config.AdminServerHazelcastAutoConfiguration.DEFAULT_NAME_EVENT_STORE_MAP
+import java.net.Inet4Address
+import java.net.InetAddress
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -20,7 +22,9 @@ class HazelcastConfiguration {
     ): Config {
         val config = Config().setClusterName(name)
         if (localAddress.isNotBlank()) {
-            config.setProperty("hazelcast.local.localAddress", localAddress)
+            val address =
+                InetAddress.getAllByName(localAddress).filterIsInstance<Inet4Address>().single()
+            config.setProperty("hazelcast.local.localAddress", address.hostAddress)
         }
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")
