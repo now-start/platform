@@ -64,7 +64,7 @@ docker compose up -d
 
 Gateway Basic 비밀번호는 Config Server의 `{cipher}` 값으로 관리하며, 복호화 결과는 `{bcrypt}` prefix가 포함된 BCrypt 해시입니다. 원문 비밀번호와 Synology OAuth client secret은 사용하지 않습니다.
 
-`config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=optional:configserver:http://config:8888` 설정으로 Config Server를 참조합니다. 외부로 publish되는 포트는 `gateway`의 `8000`뿐이며, `config`, `eureka`, `admin`은 Docker 내부 네트워크에서만 접근합니다.
+`config`가 먼저 올라오고, `eureka`, `admin`, `gateway`는 `SPRING_CONFIG_IMPORT=configserver:http://config:8888` 설정으로 Config Server를 참조합니다. 외부로 publish되는 포트는 `gateway`의 `8000`뿐이며, `config`, `eureka`, `admin`은 Docker 내부 네트워크에서만 접근합니다.
 
 Gateway의 WebFlux 세션과 감사 기록은 Gateway 전용 임베디드 Hazelcast 클러스터로 공유합니다.
 세션 만료는 기본 30분, 감사 기록 TTL은 30일이며, 두 맵은 동기 백업 1개를 사용합니다.

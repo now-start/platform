@@ -2,7 +2,7 @@ spring:
   application:
     name: gateway
   config:
-    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://localhost:8888}
+    import: ${SPRING_CONFIG_IMPORT:configserver:http://localhost:8888}
 
 gateway:
   rbac:

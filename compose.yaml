@@ -17,7 +17,7 @@ services:
       - ./logs:/workspace/logs
     environment:
       TZ: "Asia/Seoul"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config:8888"
+      SPRING_CONFIG_IMPORT: "configserver:http://config:8888"
     depends_on:
       - config
 
@@ -29,7 +29,7 @@ services:
       - ./logs:/workspace/logs
     environment:
       TZ: "Asia/Seoul"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config:8888"
+      SPRING_CONFIG_IMPORT: "configserver:http://config:8888"
     depends_on:
       - config
       - eureka
@@ -45,7 +45,7 @@ services:
     environment:
       TZ: "Asia/Seoul"
       JAVA_TOOL_OPTIONS: "-XX:MaxDirectMemorySize=256m"
-      SPRING_CONFIG_IMPORT: "optional:configserver:http://config:8888"
+      SPRING_CONFIG_IMPORT: "configserver:http://config:8888"
     depends_on:
       - config
       - eureka

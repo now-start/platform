@@ -1,4 +1,4 @@
-version = "6.2.7"
+version = "6.2.8"
 
 dependencies {
     add("implementation", "org.springframework.boot:spring-boot-starter-oauth2-client")
