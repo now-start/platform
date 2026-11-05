@@ -50,7 +50,10 @@ subprojects {
         environment.put("BP_HEALTH_CHECKER_ENABLED", "true")
     }
     tasks.named("check") { dependsOn(rootProject.tasks.named("spotlessCheck")) }
-    tasks.withType<Test>().configureEach { useJUnitPlatform() }
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+        environment("SPRING_CONFIG_IMPORT", "")
+    }
 }
 
 spotless {
