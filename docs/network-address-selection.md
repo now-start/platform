@@ -6,7 +6,7 @@ Docker API 접근이나 별도 공통 라이브러리는 추가하지 않는다.
 | 대상 | 멤버 DNS |
 | --- | --- |
 | Admin Hazelcast | tasks.platform_admin |
-| Gateway Hazelcast | tasks.platform_gateway |
+| Gateway Hazelcast | tasks.platform_gateway.platform_default |
 | Barosteel Hazelcast | tasks.barosteel_barosteel |
 | Eureka 서버 피어 | tasks.platform_eureka |
 
@@ -18,6 +18,13 @@ app.cluster.name은 spring.application.name을 기본값으로 사용한다. mem
 실제 Swarm에서 healthy 이전 task DNS가 비어 있으면 Hazelcast 기본 선택이 docker_gwbridge 주소를 광고하는 문제가 확인돼 hostname을 명시한다. CIDR 파싱과 인터페이스 열거는 사용하지 않는다.
 로컬 실행에서는 이 설정을 생략해 기존 TCP/IP 기본 주소 선택을 사용할 수 있다.
 overlay를 하나로 통합해도 ingress와 docker_gwbridge 등의 인터페이스가 있을 수 있다.
+
+Gateway는 예외적으로 공개용 `edge_public` overlay에도 연결된다. 이때 /etc/hosts에 HOSTNAME이 네트워크마다 등록돼
+IPv4가 두 개가 되므로, `app.cluster.network-reference=platform_config`와 같은 대역(인터페이스 prefix 기준)에 있는
+후보 하나를 고른다. 자기 이름의 네트워크 한정 DNS(`HOSTNAME.platform_default`)는 healthy 이전에 비어 있어 쓰지 않는다.
+선택한 주소에만 바인딩(`hazelcast.socket.bind.any=false`)하고 멤버 DNS도 `tasks.platform_gateway.platform_default`로
+한정한다. 네트워크 이름 없이 조회하면 Docker DNS가 다른 overlay의 task IP를 돌려줄 수 있다.
+Admin·Barosteel은 platform_default 하나만 사용하므로 기존 선택을 유지한다.
 
 종료 대기는 90초이며 동기 백업 1개·비동기 백업 0개를 유지한다.
 Admin·Gateway는 GRACEFUL 종료 훅을 사용한다. Barosteel은 HTTP graceful shutdown 이후 Spring이 인스턴스를 종료한다.

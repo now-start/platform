@@ -53,6 +53,10 @@ spring:
 app:
   cluster:
     local-address: '${HOSTNAME}'
+    # Gateway는 platform_default와 공개용 edge_public에 함께 연결된다.
+    # HOSTNAME이 네트워크마다 IPv4로 풀리므로 Config Server와 같은 대역의 주소를 고르고,
+    # 멤버 DNS도 platform_default로 한정해 Hazelcast가 edge_public으로 연결하지 않게 한다.
+    network-reference: platform_config
     name: gateway
-    members: tasks.platform_gateway
+    members: tasks.platform_gateway.platform_default
     port: 5701

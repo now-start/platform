@@ -15,8 +15,23 @@ class HazelcastAddressTest {
                     "localhost",
                 )
         assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1")
+        assertThat(config.getProperty("hazelcast.socket.bind.any")).isEqualTo("false")
         assertThat(config.networkConfig.join.tcpIpConfig.members)
             .containsExactly("tasks.unavailable.invalid")
+    }
+
+    @Test
+    fun doesNotResolveNetworkReferenceForSingleLocalAddress() {
+        val config =
+            HazelcastConfiguration()
+                .hazelcastConfig(
+                    "test",
+                    listOf("tasks.unavailable.invalid"),
+                    5701,
+                    "localhost",
+                    "reference.unavailable.invalid",
+                )
+        assertThat(config.getProperty("hazelcast.local.localAddress")).isEqualTo("127.0.0.1")
     }
 
     @Test
@@ -25,6 +40,7 @@ class HazelcastAddressTest {
             HazelcastConfiguration()
                 .hazelcastConfig("test", listOf("tasks.unavailable.invalid"), 5701)
         assertThat(config.getProperty("hazelcast.local.localAddress")).isNull()
+        assertThat(config.getProperty("hazelcast.socket.bind.any")).isNull()
         assertThat(config.networkConfig.interfaces.isEnabled).isFalse()
         assertThat(config.networkConfig.join.tcpIpConfig.members)
             .containsExactly("tasks.unavailable.invalid")

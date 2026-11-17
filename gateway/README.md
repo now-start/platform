@@ -7,9 +7,16 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 
 Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
 `app.cluster.name`, `members`, `port`를 설정한다.
-운영 값은 `gateway`, `tasks.platform_gateway`, `5701`이다.
+운영 값은 `gateway`, `tasks.platform_gateway.platform_default`, `5701`이다.
 운영의 app.cluster.local-address는 Docker HOSTNAME을 사용한다. 로컬에서는 members=127.0.0.1을 사용한다.
 Hazelcast 포트는 클러스터 내부 통신용이며 외부에 공개하지 않는다.
+
+Gateway는 `platform_default`와 공개용 `edge_public`에 함께 연결되므로 HOSTNAME이 IPv4 두 개로 풀린다.
+`app.cluster.network-reference`(운영 값 `platform_config`)와 같은 대역에 있는 주소 하나를 골라 광고하고,
+`hazelcast.socket.bind.any=false`로 그 주소에만 바인딩해 `edge_public`에서 클러스터 포트에 닿지 않게 한다.
+Swarm은 healthy 이전 task를 DNS에 싣지 않으므로 자기 이름이 아니라 이미 기동한 Config Server를 기준으로 삼는다.
+후보가 하나면 기준 호스트를 조회하지 않는다. 후보가 여럿인데 기준이 없거나 일치하는 주소가 하나가 아니면 시작에 실패한다.
+멤버 DNS도 `.platform_default`로 한정한다. 이름만 쓰면 Docker DNS가 `edge_public` 쪽 task IP를 돌려줄 수 있다.
 
 - 세션 맵: `nowstart:gateway:sessions`; 감사 맵: `nowstart:gateway:audit`.
 - 두 맵은 동기 백업 1개를 사용한다. 멤버 2개 이상에서 한 멤버 장애를 견딜 수 있다.

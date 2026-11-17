@@ -5,8 +5,6 @@ import com.hazelcast.config.MapConfig
 import com.hazelcast.core.HazelcastInstance
 import com.hazelcast.spring.session.HazelcastIndexedSessionRepository
 import com.hazelcast.spring.session.HazelcastSessionConfiguration
-import java.net.Inet4Address
-import java.net.InetAddress
 import java.time.Duration
 import org.nowstart.gateway.audit.HazelcastAuditEventRepository
 import org.nowstart.gateway.session.HazelcastReactiveSessionRepository
@@ -25,12 +23,14 @@ class HazelcastConfiguration {
         @Value("\${app.cluster.members}") members: List<String>,
         @Value("\${app.cluster.port:5701}") port: Int,
         @Value("\${app.cluster.local-address:}") localAddress: String = "",
+        @Value("\${app.cluster.network-reference:}") networkReference: String = "",
     ): Config {
         val config = Config().setClusterName(name)
         if (localAddress.isNotBlank()) {
-            val address =
-                InetAddress.getAllByName(localAddress).filterIsInstance<Inet4Address>().single()
+            val address = ClusterAddressSelector.resolve(localAddress, networkReference)
             config.setProperty("hazelcast.local.localAddress", address.hostAddress)
+            // 다른 overlay(예: 공개용 edge_public)에서 클러스터 포트에 닿지 않도록 선택한 주소에만 바인딩한다.
+            config.setProperty("hazelcast.socket.bind.any", "false")
         }
         config.setProperty("hazelcast.shutdownhook.policy", "GRACEFUL")
         config.setProperty("hazelcast.graceful.shutdown.max.wait", "90")
