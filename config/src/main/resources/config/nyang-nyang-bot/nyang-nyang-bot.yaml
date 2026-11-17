@@ -13,8 +13,10 @@ spring:
     password: '{cipher}076e73cea7ab188f178eba197daa6c558ed9f174772aea76e5234192ab9f986002ad50eebd9dec8ef31a49604c76edd8'
 google:
   spreadsheet:
+    # 서비스 계정 키는 gitops chzzk 스택의 Docker secret(chzzk_google_sheet_key)으로 마운트된다.
+    # 경로는 비밀값이 아니므로 암호화하지 않는다. main NFS에 의존하지 않도록 NFS 볼륨을 쓰지 않는다.
+    key: /run/secrets/google-sheet-key.json
     id: '{cipher}1cc1d4d93c6867c06be9538b15c34e01fea3c27e92fd32377fc813d35a40efa3128c5bc4afa121618dd817c0e8dbcbc2ed091730626d3759cade6d1536cacd34'
-    key: '{cipher}a4dddd07ca9249da2cc470320f003df2f09ded25023444a8262c66b90f74342fe03f280928e26212f290b076d9c8d058915770a22ba63d37f689b8d401e5ed61'
 
 chzzk:
   channel-id: '{cipher}4e63bfbda0f473e4b2aa856d30d88c5dd340b4468010e2480b8c07576140ea12075f8cffdc28be4c8b93072c326d4bcbbe97f55939b3b2fc927ee1d07a632606'

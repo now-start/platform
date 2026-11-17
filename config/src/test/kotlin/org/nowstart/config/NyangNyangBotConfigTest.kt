@@ -18,4 +18,13 @@ class NyangNyangBotConfigTest {
                 "TIMESTAMP",
             )
     }
+
+    @Test
+    fun readsGoogleServiceAccountKeyFromDockerSecret() {
+        val yaml: YamlPropertiesFactoryBean = YamlPropertiesFactoryBean()
+        yaml.setResources(ClassPathResource("config/nyang-nyang-bot/nyang-nyang-bot.yaml"))
+
+        assertThat(requireNotNull(yaml.getObject()))
+            .containsEntry("google.spreadsheet.key", "/run/secrets/google-sheet-key.json")
+    }
 }
