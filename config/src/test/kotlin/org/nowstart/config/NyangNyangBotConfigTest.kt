@@ -15,7 +15,7 @@ class NyangNyangBotConfigTest {
         assertThat(requireNotNull(yaml.getObject()))
             .containsEntry(
                 "spring.datasource.hikari.connection-init-sql",
-                "SET TIME ZONE 'Asia/Seoul'",
+                "SET TIME ZONE 'UTC'",
             )
     }
 

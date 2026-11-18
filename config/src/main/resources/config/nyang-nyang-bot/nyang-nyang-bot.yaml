@@ -5,7 +5,7 @@ spring:
     open-in-view: false
   datasource:
     hikari:
-      connection-init-sql: SET TIME ZONE 'Asia/Seoul'
+      connection-init-sql: SET TIME ZONE 'UTC'
     url: '{cipher}bdaf0e5269787d6a4a252e7df09fe9070a95b3a055cd0797600b24a7d03fdb2e2e10ac9a3b16905c4e26810176ee9655642b00d42556f255bd7c9f3fb370e643b4a5f8e55f3e5ee3f871b4b1c0bf5ce5293032419d13c9ffab207513c95c0f92322b82e50b0c3b1e16c3cbfc605e49ba2b79d3463665c9a573225e5051c889769a5e50ec1c6948d543c3b8c692f90193'
     username: '{cipher}e76dd74451fcf3902439fc1e0c96ebbb3fc7efbcb5c37972f5db8a81d6ceb1be'
     password: '{cipher}076e73cea7ab188f178eba197daa6c558ed9f174772aea76e5234192ab9f986002ad50eebd9dec8ef31a49604c76edd8'
