@@ -8,14 +8,14 @@ import org.springframework.core.io.ClassPathResource
 class NyangNyangBotConfigTest {
 
     @Test
-    fun providesMariaDbInstantJdbcType() {
+    fun providesPostgresqlSessionTimeZone() {
         val yaml: YamlPropertiesFactoryBean = YamlPropertiesFactoryBean()
         yaml.setResources(ClassPathResource("config/nyang-nyang-bot/nyang-nyang-bot.yaml"))
 
         assertThat(requireNotNull(yaml.getObject()))
             .containsEntry(
-                "spring.jpa.properties.hibernate.type.preferred_instant_jdbc_type",
-                "TIMESTAMP",
+                "spring.datasource.hikari.connection-init-sql",
+                "SET TIME ZONE 'Asia/Seoul'",
             )
     }
 
