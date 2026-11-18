@@ -1,6 +1,7 @@
 # Barosteel 통합 실행
 
 기본 프로필로 업무를 실행한다. 기존 DB 암호화 값과 Eureka·Actuator 설정은 유지한다.
+애플리케이션 기본 시간대와 JDBC는 UTC를 사용하고, Hikari가 새 DB 연결마다 `SET TIME ZONE 'UTC'`를 실행한다. 서울 기준의 업무 날짜와 화면 표시는 앱에서 `Asia/Seoul`을 명시한다. 기존 `timestamptz` 데이터는 변경하지 않는다.
 `app.session.shared=true`로 내장 Hazelcast 세션과 Spring Cache를 활성화한다. 로그인 제한은 DB를 사용한다.
 
 `app.cluster`는 이름, 태스크 DNS와 로컬 overlay CIDR을 지정한다. `app.cache`는 cache.* Map의 TTL과 멤버당 항목 수를 지정한다. 캐시 TTL은 세션 Map에 적용하지 않는다. Hazelcast는 단독 멤버와 일시적 분리를 허용하며 복구 후 자동 병합한다.
