@@ -1,5 +1,4 @@
 import org.springframework.boot.gradle.dsl.SpringBootExtension
-import org.springframework.boot.gradle.tasks.bundling.BootBuildImage
 
 plugins {
     kotlin("jvm") version "2.4.21" apply false
@@ -40,14 +39,6 @@ subprojects {
         add("implementation", "io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter")
         add("developmentOnly", "org.springframework.boot:spring-boot-devtools")
         add("testImplementation", "org.springframework.boot:spring-boot-starter-test")
-    }
-    tasks.named<BootBuildImage>("bootBuildImage") {
-        buildpacks =
-            listOf(
-                "urn:cnb:builder:paketo-buildpacks/java",
-                "docker.io/paketobuildpacks/health-checker:latest",
-            )
-        environment.put("BP_HEALTH_CHECKER_ENABLED", "true")
     }
     tasks.named("check") { dependsOn(rootProject.tasks.named("spotlessCheck")) }
     tasks.withType<Test>().configureEach {
