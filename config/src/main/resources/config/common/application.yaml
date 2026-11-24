@@ -1,6 +1,10 @@
 server:
   shutdown: graceful
   forward-headers-strategy: framework
+  request:
+    header:
+      forwarded:
+        use-prefix: true
 
 spring:
   jmx:
