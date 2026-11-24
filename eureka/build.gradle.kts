@@ -1,7 +1,7 @@
 version = "2.5.10"
 
 dependencies {
-    add("implementation", "de.codecentric:spring-boot-admin-starter-client")
-    add("implementation", "org.springframework.cloud:spring-cloud-starter-config")
-    add("implementation", "org.springframework.cloud:spring-cloud-starter-netflix-eureka-server")
+    implementation("de.codecentric:spring-boot-admin-starter-client")
+    implementation("org.springframework.cloud:spring-cloud-starter-config")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-server")
 }
