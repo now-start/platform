@@ -43,8 +43,7 @@ class EurekaForwardedPrefixTests {
         assertThat(html).contains("""<base href="/eureka/">""", """href="/eureka/lastn"""")
         val base = URI.create("/eureka/")
 
-        for ((asset, mediaType) in
-            mapOf("eureka/css/wro.css" to "text/css", "eureka/js/wro.js" to "text/javascript")) {
+        fun assetBody(asset: String, mediaType: String): String {
             assertThat(html).contains("\"$asset\"")
             val publicPath = base.resolve(asset).path
             // The discovery route strips its service ID before forwarding to Eureka.
@@ -52,7 +51,13 @@ class EurekaForwardedPrefixTests {
             assertThat(response.statusCode()).describedAs(publicPath).isEqualTo(200)
             assertThat(response.headers().firstValue("Content-Type").orElse(""))
                 .startsWith(mediaType)
+            return response.body()
         }
+
+        assertThat(assetBody("eureka/css/wro.css", "text/css"))
+            .contains(".table-striped", ".navbar-expand-md")
+        assertThat(assetBody("eureka/js/wro.js", "text/javascript"))
+            .contains("""[data-bs-toggle="tab"]""", """[data-bs-toggle="collapse"]""")
 
         val lastn = get("/lastn", "text/html", forwarded = true)
         assertThat(lastn.statusCode()).isEqualTo(200)
