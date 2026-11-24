@@ -3,7 +3,7 @@ import org.springframework.boot.gradle.dsl.SpringBootExtension
 plugins {
     kotlin("jvm") version "2.4.21" apply false
     kotlin("plugin.spring") version "2.4.21" apply false
-    id("org.springframework.boot") version "4.1.1" apply false
+    id("org.springframework.boot") version "4.2.0" apply false
     id("com.diffplug.spotless") version "8.10.4"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.gorylenko.gradle-git-properties") version "4.0.1" apply false
@@ -26,12 +26,12 @@ subprojects {
     repositories { mavenCentral() }
     dependencyManagement {
         imports {
-            mavenBom("de.codecentric:spring-boot-admin-dependencies:4.1.4")
-            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2025.1.3")
-            mavenBom("org.springdoc:springdoc-openapi-bom:3.1.1")
-            mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.32.0")
+            mavenBom("de.codecentric:spring-boot-admin-dependencies:4.1.5")
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2026.0.0")
+            mavenBom("org.springdoc:springdoc-openapi-bom:3.2.1")
+            mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.34.0")
+            mavenBom("org.jolokia:jolokia-bom:2.6.5")
         }
-        dependencies { dependency("com.hazelcast:hazelcast:5.7.0") }
     }
     dependencies {
         add("implementation", "org.jetbrains.kotlin:kotlin-reflect")

@@ -1,4 +1,4 @@
-version = "2.11.29"
+version = "2.11.30"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-hazelcast")
@@ -6,6 +6,6 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-config")
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
     implementation("de.codecentric:spring-boot-admin-starter-server")
-    implementation("org.jolokia:jolokia-support-springboot:2.6.4")
+    implementation("org.jolokia:jolokia-support-springboot")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui")
 }
