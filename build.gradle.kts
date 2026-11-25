@@ -1,5 +1,14 @@
 import org.springframework.boot.gradle.dsl.SpringBootExtension
 
+buildscript {
+    dependencies {
+        constraints {
+            // The Spring Boot Gradle plugin brings Commons Lang through Commons Compress.
+            classpath("org.apache.commons:commons-lang3:3.22.0")
+        }
+    }
+}
+
 plugins {
     kotlin("jvm") version "2.4.21" apply false
     kotlin("plugin.spring") version "2.4.21" apply false
