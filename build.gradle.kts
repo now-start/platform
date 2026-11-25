@@ -32,6 +32,11 @@ subprojects {
             mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.34.0")
             mavenBom("org.jolokia:jolokia-bom:2.6.5")
         }
+        dependencies {
+            // Netflix Eureka still requests older HttpClient and Guava releases.
+            dependency("org.apache.httpcomponents:httpclient:4.5.14")
+            dependency("com.google.guava:guava:33.8.0-jre")
+        }
     }
     dependencies {
         add("implementation", "org.jetbrains.kotlin:kotlin-reflect")
