@@ -1,10 +1,19 @@
 import org.springframework.boot.gradle.dsl.SpringBootExtension
 
+buildscript {
+    dependencies {
+        constraints {
+            // The Spring Boot Gradle plugin brings Commons Lang through Commons Compress.
+            classpath("org.apache.commons:commons-lang3:3.22.0")
+        }
+    }
+}
+
 plugins {
     kotlin("jvm") version "2.4.21" apply false
     kotlin("plugin.spring") version "2.4.21" apply false
     id("org.springframework.boot") version "4.2.0" apply false
-    id("com.diffplug.spotless") version "8.10.4"
+    id("com.diffplug.spotless") version "8.12.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.gorylenko.gradle-git-properties") version "4.0.1" apply false
 }
@@ -31,6 +40,11 @@ subprojects {
             mavenBom("org.springdoc:springdoc-openapi-bom:3.2.1")
             mavenBom("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:2.34.0")
             mavenBom("org.jolokia:jolokia-bom:2.6.5")
+        }
+        dependencies {
+            // Netflix Eureka still requests older HttpClient and Guava releases.
+            dependency("org.apache.httpcomponents:httpclient:4.5.14")
+            dependency("com.google.guava:guava:33.8.0-jre")
         }
     }
     dependencies {
