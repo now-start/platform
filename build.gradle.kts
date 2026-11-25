@@ -4,7 +4,7 @@ plugins {
     kotlin("jvm") version "2.4.21" apply false
     kotlin("plugin.spring") version "2.4.21" apply false
     id("org.springframework.boot") version "4.2.0" apply false
-    id("com.diffplug.spotless") version "8.10.4"
+    id("com.diffplug.spotless") version "8.12.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.gorylenko.gradle-git-properties") version "4.0.1" apply false
 }

@@ -1,4 +1,4 @@
-version = "2.11.30"
+version = "2.11.31"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-hazelcast")

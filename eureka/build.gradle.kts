@@ -1,4 +1,4 @@
-version = "2.5.14"
+version = "2.5.15"
 
 dependencies {
     implementation("de.codecentric:spring-boot-admin-starter-client")
