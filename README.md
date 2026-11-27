@@ -4,12 +4,14 @@ Spring Cloud 기반 플랫폼 모노레포입니다. 기존 독립 저장소였�
 
 ## 모듈
 
-| 모듈 | 역할 | 기본 포트 | 현재 버전 |
-| --- | --- | ---: | --- |
-| `config` | Spring Cloud Config Server | `8888` | `2.1.24` |
-| `eureka` | Eureka Server | `8761` | `2.5.5` |
-| `admin` | Spring Boot Admin Server | `9090` | `2.11.21` |
-| `gateway` | Spring Cloud Gateway | `8000` | `6.2.2` |
+| 모듈 | 역할 | 기본 포트 | 현재 버전 | 라인 커버리지 | 분기 커버리지 |
+| --- | --- | ---: | --- | --- | --- |
+| `config` | Spring Cloud Config Server | `8888` | `2.1.24` | [![config 라인 커버리지](https://github.com/now-start/platform/blob/coverage/config/jacoco.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) | [![config 분기 커버리지](https://github.com/now-start/platform/blob/coverage/config/jacoco-branches.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) |
+| `eureka` | Eureka Server | `8761` | `2.5.5` | [![eureka 라인 커버리지](https://github.com/now-start/platform/blob/coverage/eureka/jacoco.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) | [![eureka 분기 커버리지](https://github.com/now-start/platform/blob/coverage/eureka/jacoco-branches.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) |
+| `admin` | Spring Boot Admin Server | `9090` | `2.11.21` | [![admin 라인 커버리지](https://github.com/now-start/platform/blob/coverage/admin/jacoco.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) | [![admin 분기 커버리지](https://github.com/now-start/platform/blob/coverage/admin/jacoco-branches.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) |
+| `gateway` | Spring Cloud Gateway | `8000` | `6.2.2` | [![gateway 라인 커버리지](https://github.com/now-start/platform/blob/coverage/gateway/jacoco.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) | [![gateway 분기 커버리지](https://github.com/now-start/platform/blob/coverage/gateway/jacoco-branches.svg?raw=true)](https://github.com/now-start/platform/actions/workflows/build.yaml) |
+
+커버리지는 모듈별 JVM 코드 기준입니다. `config`의 YAML 설정 검증 결과는 Actions의 테스트 결과에서 확인할 수 있습니다.
 
 ## 요구 사항
 
@@ -88,7 +90,7 @@ Config Server는 `config/src/main/resources/config/` 아래의 설정을 읽습�
 `.github/workflows/build.yaml`은 `push`와 `pull_request`에서 4개 모듈을 모두 reusable workflow에 전달합니다. 실제 이미지 생성 여부는 reusable workflow가 각 모듈의 `version`과 Git tag 존재 여부로 결정합니다.
 
 - `{module}-{version}` tag가 없으면 빌드, 이미지 푸시, 릴리스 생성
-- `{module}-{version}` tag가 이미 있으면 해당 모듈 빌드/이미지 푸시 생략
+- 기존 태그가 있는 모듈도 테스트와 커버리지 측정을 실행하며, 발행된 이미지와 Release는 재사용합니다.
 - 새 이미지를 만들려면 변경 영향에 맞게 해당 모듈의 `build.gradle.kts` version을 올립니다.
 - `release` 이벤트도 4개 모듈을 reusable workflow에 전달하며, reusable workflow가 release tag의 module prefix를 확인해 해당 모듈만 프로모트/롤백합니다.
 
