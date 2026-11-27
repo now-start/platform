@@ -6,6 +6,6 @@
   "branch_percent": 80.0,
   "branch_covered": 40,
   "branch_missed": 10,
-  "source_sha": "50407f2ccf9999f7403f10be88bd39b409ddf955",
+  "source_sha": "cc9b244b8bcbbae53d6d807a65087bc65349b90d",
   "scope": "eureka/build/reports/jacoco/root/jacoco.xml"
 }
