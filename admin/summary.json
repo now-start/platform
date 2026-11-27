@@ -6,6 +6,6 @@
   "branch_percent": 66.6,
   "branch_covered": 4,
   "branch_missed": 2,
-  "source_sha": "50407f2ccf9999f7403f10be88bd39b409ddf955",
+  "source_sha": "cc9b244b8bcbbae53d6d807a65087bc65349b90d",
   "scope": "admin/build/reports/jacoco/root/jacoco.xml"
 }
