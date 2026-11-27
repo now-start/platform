@@ -8,7 +8,7 @@ import org.springframework.core.io.ClassPathResource
 class NyangNyangBotConfigTest {
 
     @Test
-    fun providesPostgresqlSessionTimeZone() {
+    fun providesUtcForPostgresqlAndHibernate() {
         val yaml: YamlPropertiesFactoryBean = YamlPropertiesFactoryBean()
         yaml.setResources(ClassPathResource("config/nyang-nyang-bot/nyang-nyang-bot.yaml"))
 
@@ -17,6 +17,7 @@ class NyangNyangBotConfigTest {
                 "spring.datasource.hikari.connection-init-sql",
                 "SET TIME ZONE 'UTC'",
             )
+            .containsEntry("spring.jpa.properties.hibernate.jdbc.time_zone", "UTC")
     }
 
     @Test

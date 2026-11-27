@@ -75,11 +75,13 @@ Config Server의 `app.cluster.*`에 실제 task DNS와 네트워크 인터페이
 
 ## 설정
 
-서비스 공통/개별 설정은 `config/src/main/resources/config/**` 아래에서 관리합니다.
+Config Server는 `config/src/main/resources/config/` 아래의 설정을 읽습니다.
 
-- `config/common/application.yaml`: 공통 설정
-- `config/config/{service}/{service}.yaml`: 서비스별 설정
-- `config/common/test.yaml`: 테스트용 공통 설정
+- `common/application.yaml`은 모든 서비스가 공유하는 설정입니다.
+- `{service}/{service}.yaml`은 해당 서비스의 운영 설정입니다.
+- `common/application-local.yaml`은 Config Server에 `local` 프로필을 요청할 때 적용됩니다.
+
+`lotto`, `barosteel`, `nyang-nyang-bot`은 각 앱의 `application.yaml`에 서비스 이름과 `!local` Config Server 연결 설정을 둡니다. 로컬 실행에서는 각 앱의 `application-local.yaml`을 읽습니다.
 
 ## CI/CD
 
