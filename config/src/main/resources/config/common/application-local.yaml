@@ -1,14 +1,4 @@
-spring:
-  cloud:
-    config:
-      enabled: false
-    discovery:
-      enabled: false
-
-eureka:
-  client:
-    enabled: false
-
-otel:
-  sdk:
-    disabled: true
+spring.cloud.config.enabled: false
+spring.cloud.discovery.enabled: false
+eureka.client.enabled: false
+otel.sdk.disabled: true

@@ -21,5 +21,4 @@ spring:
 app:
   cluster:
     local-address: '${HOSTNAME}'
-    name: admin
     members: tasks.platform_admin

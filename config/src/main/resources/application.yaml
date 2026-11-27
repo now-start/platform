@@ -1,6 +1,4 @@
-spring:
-  config:
-    import: optional:classpath:config/common/application.yaml
+spring.config.import: optional:classpath:config/common/application.yaml
 
 ---
 
@@ -15,6 +13,7 @@ spring:
       server:
         git:
           uri: https://github.com/now-start/platform
+          # 복수 서비스 조회에서도 요청 이름의 순서대로 검색 폴더가 바뀌지 않게 한다.
           search-paths: config/src/main/resources/config/*
 
 encrypt:

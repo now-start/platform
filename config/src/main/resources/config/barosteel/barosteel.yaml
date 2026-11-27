@@ -8,8 +8,7 @@ spring:
       ddl-auto: validate
     open-in-view: false
     properties:
-      hibernate:
-        jdbc.time_zone: UTC
+      hibernate.jdbc.time_zone: UTC
   flyway:
     enabled: true
   datasource:
@@ -36,7 +35,6 @@ app:
 
   cluster:
     local-address: '${HOSTNAME}'
-    name: barosteel
     members: tasks.barosteel_barosteel
   cache:
     ttl: 300s
