@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="20" role="img" aria-label="JaCoCo branch: n/a">
+  <title>JaCoCo branch: n/a</title>
+  <rect width="150" height="20" rx="3" fill="#9f9f9f"/>
+  <path fill="#555" d="M3 0h91v20H3a3 3 0 0 1-3-3V3a3 3 0 0 1 3-3"/>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+    <text x="47" y="14">JaCoCo branch</text><text x="122" y="14">n/a</text>
+  </g>
+</svg>
