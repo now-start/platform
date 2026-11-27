@@ -35,7 +35,6 @@ app:
 
   cluster:
     local-address: '${HOSTNAME}'
-    name: barosteel
     members: tasks.barosteel_barosteel
   cache:
     ttl: 300s

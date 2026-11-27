@@ -5,9 +5,8 @@ Admin의 Hazelcast 클러스터와 이름·데이터를 분리하며 외부 Redi
 
 ## 클러스터와 세션
 
-Config Server의 `config/src/main/resources/config/gateway/gateway.yaml`에서
-`app.cluster.name`, `members`, `port`를 설정한다.
-운영 값은 `gateway`, `tasks.platform_gateway.platform_default`, `5701`이다.
+운영 클러스터는 서비스 이름 `gateway`와 기본 TCP 포트 `5701`을 사용한다.
+Config Server의 `gateway.yaml`은 멤버 탐색 주소 `app.cluster.members`를 `tasks.platform_gateway.platform_default`로 지정한다.
 운영의 app.cluster.local-address는 Docker HOSTNAME을 사용한다. 로컬에서는 members=127.0.0.1을 사용한다.
 Hazelcast 포트는 클러스터 내부 통신용이며 외부에 공개하지 않는다.
 

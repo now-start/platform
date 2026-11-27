@@ -5,15 +5,12 @@ spring:
     username: '{cipher}b4fe252e9b11fb3e43d395ad2512b8defba4e75e349a4856713199bf2db6656b'
     password: '{cipher}c16bbd48acb689718be15447d98feeb93c4f1eb84d3c710729834837b4a8a4d4'
     properties:
-      mail:
-        smtp:
-          auth: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-          starttls:
-            enable: true
-            required: true
+      mail.smtp.auth: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
 
 management:
   health:
