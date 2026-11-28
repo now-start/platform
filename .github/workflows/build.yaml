@@ -20,7 +20,6 @@ jobs:
     uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: config
-      shared-coverage: true
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -28,7 +27,6 @@ jobs:
     uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: eureka
-      shared-coverage: true
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -36,7 +34,6 @@ jobs:
     uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: admin
-      shared-coverage: true
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,6 +41,5 @@ jobs:
     uses: now-start/gitops/.github/workflows/reusable-java-app.yaml@main
     with:
       module: gateway
-      shared-coverage: true
     secrets:
       registry-password: ${{ secrets.GITHUB_TOKEN }}
